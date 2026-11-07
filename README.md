@@ -34,3 +34,8 @@ while True:
 ./gradlew build            # -> build/libs/minescripthud-<version>.jar  (Java 25)
 ./gradlew build -Pminecraft_version=26.3 -Pfabric_api_version=0.165.2+26.3   # check another version
 ```
+
+## Tests & releases
+
+- `python -B -m unittest discover tests` tests the `hud.py` wrapper. CI also builds against every supported 26.x version.
+- To release, push a tag such as `git tag v1.0.1 && git push origin v1.0.1`. GitHub Actions then builds `minescripthud-1.0.1.jar` and attaches it to a GitHub release.

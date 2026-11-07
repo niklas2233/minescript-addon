@@ -1,0 +1,28 @@
+name: Release
+
+# Push a tag like v1.0.1 to build and publish a GitHub release. The tag sets the mod version.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: python -B -m unittest discover tests -v
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew build --console=plain -Pmod_version=${GITHUB_REF_NAME#v}
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: build/libs/minescripthud-*.jar
+          generate_release_notes: true
