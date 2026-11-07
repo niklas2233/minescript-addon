@@ -6,6 +6,8 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 - **`chat`**: read every chat line, including the action bar and lines other client mods add, with click actions.
 - **`keys`**: hotkeys. "Minescript key" slots run a command, or deliver presses to a script.
 
+**📖 Full scripting docs: [docs/README.md](docs/README.md)**: every function, the config file, examples and troubleshooting.
+
 On launch the mod writes `hud.py`, `chat.py` and `keys.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud` / `import chat` / `import keys`.
 
 ## HUD
