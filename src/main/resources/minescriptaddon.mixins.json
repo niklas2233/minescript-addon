@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "com.niklas2233.minescriptaddon.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": ["ChatComponentMixin"],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

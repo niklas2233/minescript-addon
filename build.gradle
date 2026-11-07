@@ -9,6 +9,10 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	testImplementation platform("org.junit:junit-bom:${project.junit_version}")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 processResources {
@@ -19,13 +23,9 @@ processResources {
 	}
 }
 
-// Plain-Java check of the element store (expiry, prefix clear); no test framework needed.
-def elementsCheck = tasks.register('elementsCheck', JavaExec) {
-	classpath = sourceSets.test.runtimeClasspath
-	mainClass = 'com.niklas2233.minescriptaddon.ElementsCheck'
+test {
+	useJUnitPlatform()
 }
-tasks.named('check') { dependsOn elementsCheck }
-tasks.named('test') { failOnNoDiscoveredTests = false } // src/test holds the plain check, not JUnit tests
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 25

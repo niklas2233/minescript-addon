@@ -33,7 +33,7 @@ public class MinescriptHud implements ClientModInitializer {
 		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("minescriptaddon", "elements"),
 				(g, delta) -> elements.forEachLive(System.nanoTime(), e -> e.accept(g)));
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clear());
-		installPythonModule();
+		installPythonModules();
 	}
 
 	public static void text(String id, int x, int y, String text, int color, boolean shadow) {
@@ -102,13 +102,16 @@ public class MinescriptHud implements ClientModInitializer {
 	private static int ax(GuiGraphicsExtractor g, int x) { return x < 0 ? g.guiWidth() + x : x; }
 	private static int ay(GuiGraphicsExtractor g, int y) { return y < 0 ? g.guiHeight() + y : y; }
 
-	private static void installPythonModule() {
-		Path target = FabricLoader.getInstance().getGameDir().resolve("minescript").resolve("hud.py");
-		try (InputStream in = MinescriptHud.class.getResourceAsStream("/hud.py")) {
-			Files.createDirectories(target.getParent());
-			Files.write(target, in.readAllBytes());
-		} catch (Exception e) {
-			LOG.warn("Could not install {}", target, e);
+	/** Copies the Python wrappers (hud.py, chat.py) into the minescript folder, overwriting old copies. */
+	private static void installPythonModules() {
+		Path dir = FabricLoader.getInstance().getGameDir().resolve("minescript");
+		for (String name : new String[] {"hud.py", "chat.py"}) {
+			try (InputStream in = MinescriptHud.class.getResourceAsStream("/" + name)) {
+				Files.createDirectories(dir);
+				Files.write(dir.resolve(name), in.readAllBytes());
+			} catch (Exception e) {
+				LOG.warn("Could not install {}", dir.resolve(name), e);
+			}
 		}
 	}
 }
