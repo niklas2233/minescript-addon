@@ -1,4 +1,4 @@
-package com.niklas2233.minescripthud;
+package com.niklas2233.minescriptaddon;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -24,13 +24,13 @@ import java.util.function.Consumer;
  * The overloads with a trailing ttl (seconds, 0 = never) make the element vanish unless redrawn in time.
  */
 public class MinescriptHud implements ClientModInitializer {
-	private static final Logger LOG = LoggerFactory.getLogger("minescripthud");
+	private static final Logger LOG = LoggerFactory.getLogger("minescriptaddon");
 
 	private static final Elements<Consumer<GuiGraphicsExtractor>> elements = new Elements<>();
 
 	@Override
 	public void onInitializeClient() {
-		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("minescripthud", "elements"),
+		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("minescriptaddon", "elements"),
 				(g, delta) -> elements.forEachLive(System.nanoTime(), e -> e.accept(g)));
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clear());
 		installPythonModule();

@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "id": "minescripthud",
+  "id": "minescriptaddon",
   "version": "${version}",
-  "name": "Minescript HUD",
+  "name": "Minescript Addon",
   "description": "Lets Minescript scripts draw text, boxes and items on the HUD.",
   "authors": ["niklas2233"],
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
-    "client": ["com.niklas2233.minescripthud.MinescriptHud"]
+    "client": ["com.niklas2233.minescriptaddon.MinescriptHud"]
   },
   "depends": {
     "fabricloader": ">=0.18.0",

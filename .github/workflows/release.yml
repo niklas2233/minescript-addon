@@ -24,5 +24,5 @@ jobs:
       - run: ./gradlew build --console=plain -Pmod_version=${GITHUB_REF_NAME#v}
       - uses: softprops/action-gh-release@v2
         with:
-          files: build/libs/minescripthud-*.jar
+          files: build/libs/minescriptaddon-*.jar
           generate_release_notes: true

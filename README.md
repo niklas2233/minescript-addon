@@ -1,4 +1,4 @@
-# Minescript HUD
+# Minescript Addon
 
 Fabric client mod for Minecraft 26.1–26.x that lets [Minescript](https://minescript.net) 5.0 scripts draw on the HUD.
 
@@ -41,7 +41,7 @@ Copy [`examples/hud_demo.py`](examples/hud_demo.py) to `.minecraft/minescript/` 
 ## Build
 
 ```
-./gradlew build            # -> build/libs/minescripthud-<version>.jar  (Java 25)
+./gradlew build            # -> build/libs/minescriptaddon-<version>.jar  (Java 25)
 ./gradlew build -Pminecraft_version=26.3 -Pfabric_api_version=0.165.2+26.3   # check another version
 ```
 
@@ -50,4 +50,4 @@ Copy [`examples/hud_demo.py`](examples/hud_demo.py) to `.minecraft/minescript/` 
 - `python -B -m unittest discover tests` tests the `hud.py` wrapper.
 - `./gradlew build` also runs `ElementsCheck`, a plain-Java check of expiry and prefix removal (`./gradlew elementsCheck` runs it alone).
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.0.1 && git push origin v1.0.1`. GitHub Actions then builds `minescripthud-1.0.1.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.0.1 && git push origin v1.0.1`. GitHub Actions then builds `minescriptaddon-1.0.1.jar` and attaches it to a GitHub release.

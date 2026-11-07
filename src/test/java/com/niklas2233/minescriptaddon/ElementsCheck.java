@@ -1,4 +1,4 @@
-package com.niklas2233.minescripthud;
+package com.niklas2233.minescriptaddon;
 
 import java.util.ArrayList;
 import java.util.List;

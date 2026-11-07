@@ -1,4 +1,4 @@
-"""Draw on the Minecraft HUD from Minescript. Installed by the Minescript HUD mod (overwritten on launch).
+"""Draw on the Minecraft HUD from Minescript. Installed by the Minescript Addon mod (overwritten on launch).
 
     import hud
     try:
@@ -18,7 +18,7 @@ that crashed or was killed go away. Otherwise elements stay until removed, clear
 
 from java import JavaClass
 
-_Hud = JavaClass("com.niklas2233.minescripthud.MinescriptHud")
+_Hud = JavaClass("com.niklas2233.minescriptaddon.MinescriptHud")
 
 
 def _argb(color: int, alpha: int = None) -> int:
