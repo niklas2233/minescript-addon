@@ -3,12 +3,12 @@
   "id": "minescriptaddon",
   "version": "${version}",
   "name": "Minescript Addon",
-  "description": "Gives Minescript scripts a HUD, every chat line (including the action bar and lines other mods add), hotkeys, alerts and inputs that let go when a script dies.",
+  "description": "Gives Minescript scripts a HUD, every chat line (including the action bar and lines other mods add), hotkeys, alerts, inputs that let go when a script dies, and client ticks.",
   "authors": ["niklas2233"],
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
-    "client": ["com.niklas2233.minescriptaddon.MinescriptHud", "com.niklas2233.minescriptaddon.MinescriptChat", "com.niklas2233.minescriptaddon.MinescriptKeys", "com.niklas2233.minescriptaddon.MinescriptInputs"]
+    "client": ["com.niklas2233.minescriptaddon.MinescriptHud", "com.niklas2233.minescriptaddon.MinescriptChat", "com.niklas2233.minescriptaddon.MinescriptKeys", "com.niklas2233.minescriptaddon.MinescriptInputs", "com.niklas2233.minescriptaddon.MinescriptTicks"]
   },
   "mixins": ["minescriptaddon.mixins.json", "minescriptaddon.overlay.mixins.json"],
   "depends": {

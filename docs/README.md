@@ -1,4 +1,4 @@
-## Minescript Addon v1.4.1 docs
+## Minescript Addon v1.5.0 docs
 
 Table of contents:
 
@@ -14,6 +14,7 @@ Table of contents:
     - [keys module](#keys-module)
     - [alert module](#alert-module)
     - [inputs module](#inputs-module)
+    - [ticks module](#ticks-module)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
@@ -29,7 +30,7 @@ Download `minescriptaddon-<version>.jar` from
 (within the **minecraft** folder). When upgrading, delete the old jar first. Very old builds were
 named `minescripthud-*.jar`.
 
-On every launch the mod writes five Python modules into the **minescript** folder, so scripts can
+On every launch the mod writes six Python modules into the **minescript** folder, so scripts can
 import them. Don't edit these files: they're overwritten on the next launch.
 
 | File | Module |
@@ -39,6 +40,7 @@ import them. Don't edit these files: they're overwritten on the next launch.
 | `minecraft/minescript/keys.py` | [keys module](#keys-module) |
 | `minecraft/minescript/alert.py` | [alert module](#alert-module) |
 | `minecraft/minescript/inputs.py` | [inputs module](#inputs-module) |
+| `minecraft/minescript/ticks.py` | [ticks module](#ticks-module) |
 
 ## In-game usage
 
@@ -650,6 +652,65 @@ Releases every key held through this module, or only those whose owner **starts 
 Give each script its own owner (`"farm."`) so scripts don't release each other's keys.
 
 Since: v1.4
+
+### ticks module
+
+*Usage:* `import ticks  # from Python script`
+
+Counts **client ticks**: about 20 per second, fewer when the game lags. The counter starts when the
+game starts and keeps counting outside a world (title screen, menus).
+
+- [`ticks.count`](#tickscount)
+- [`ticks.time_since`](#tickstime_since)
+- [`ticks.wait`](#tickswait)
+
+**Latency:** [`wait`](#tickswait) doesn't poll. The mod blocks the call in Java until the tick ends,
+so it returns within about a millisecond of the tick, plus Minescript's own call overhead (usually a
+few ms). The call runs on the script's own thread (Minescript's script loop), never on the game's,
+and blocks for at most 0.1 s at a time, so a `\killjob`'d script lets go of the bridge within 0.1 s.
+
+#### ticks.count
+*Usage:* <code>ticks.count() -> int</code>
+
+Gets the number of client ticks that have ended since the game started.
+
+Since: v1.5
+
+#### ticks.wait
+*Usage:* <code>ticks.wait(n: int = 1, timeout: float = None) -> int</code>
+
+Waits until `n` more client ticks have ended.
+
+*Args:*
+
+- `n`: ticks to wait, >= 1
+- `timeout`: seconds; `None` = forever, `0` = check once
+
+*Returns:*
+
+- the new tick count, or `None` on timeout
+
+```
+while running:
+  ticks.wait()          # once per tick
+  update_hud()
+```
+
+Since: v1.5
+
+#### ticks.time_since
+*Usage:* <code>ticks.time_since(count: int) -> float</code>
+
+Gets the seconds since tick `count` ended, measured from when the tick actually ended. Ticks more
+than ~55 min old are estimated at 50 ms per tick. A tick that hasn't ended yet raises `ValueError`.
+
+```
+start = ticks.count()
+do_something()
+minescript.echo(f"{ticks.count() - start} ticks, {ticks.time_since(start):.2f} s")
+```
+
+Since: v1.5
 
 ## Examples
 

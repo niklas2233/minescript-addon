@@ -7,10 +7,11 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 - **`keys`**: hotkeys. "Minescript key" slots run a command, or deliver presses to a script.
 - **`alert`**: get the player's attention: a sound only you hear, a toast, a taskbar flash.
 - **`inputs`**: hold attack/use/movement keys that let go when the script crashes or is killed.
+- **`ticks`**: count client ticks and wait for the next one without polling.
 
 **📖 Full scripting docs: [docs/README.md](docs/README.md)**: every function, the config file, examples and troubleshooting.
 
-On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py` and `inputs.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert` or `import inputs`.
+On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py` and `ticks.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs` or `import ticks`.
 
 ## HUD
 
@@ -179,6 +180,23 @@ inputs.hold("forward", False)                      # release now
 - Letting go restores the physical state, so a key you hold yourself stays down.
 - All holds are released on disconnect and when the world changes.
 
+## Ticks
+
+```python
+import ticks
+start = ticks.count()
+ticks.wait(20)                                 # about 1 s at 20 ticks/s
+print(ticks.count() - start, "ticks in", ticks.time_since(start), "s")
+```
+
+| Function | |
+|---|---|
+| `count()` | client ticks ended since the game started (also counts outside a world) |
+| `wait(n=1, timeout=None)` | wait for `n` more ticks; returns the new count, or `None` on timeout |
+| `time_since(count)` | seconds since that tick ended |
+
+- `wait` doesn't poll: the call blocks in Java (on the script's own thread, at most 0.1 s per call) and returns within about a millisecond of the tick, plus Minescript's call overhead.
+
 ## In-game checks
 
 Copy these from [`examples/`](examples) into `.minecraft/minescript/`. They aren't installed by the mod.
@@ -197,7 +215,7 @@ Both report in chat whether each step worked, or the exception it raised.
 
 ## Tests & releases
 
-- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py` and `inputs.py` against a stubbed Java bridge.
+- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py` and `ticks.py` against a stubbed Java bridge.
 - `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.4.0 && git push origin v1.4.0`. GitHub Actions then builds `minescriptaddon-1.4.0.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.5.0 && git push origin v1.5.0`. GitHub Actions then builds `minescriptaddon-1.5.0.jar` and attaches it to a GitHub release.
