@@ -78,6 +78,11 @@ public class MinescriptChat implements ClientModInitializer {
 		LOG.unhide(regex, System.nanoTime());
 	}
 
+	/** True while any screen (inventory, chest, chat, menu) is open. */
+	static boolean screenOpen() {
+		return openScreen != null;
+	}
+
 	// --- Capture
 
 	private static void event(String source, Component message) {

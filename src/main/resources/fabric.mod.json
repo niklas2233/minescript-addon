@@ -3,12 +3,12 @@
   "id": "minescriptaddon",
   "version": "${version}",
   "name": "Minescript Addon",
-  "description": "Lets Minescript scripts draw on the HUD and read every chat line, including the action bar and lines other mods add.",
+  "description": "Gives Minescript scripts a HUD, every chat line (including the action bar and lines other mods add) and hotkeys.",
   "authors": ["niklas2233"],
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
-    "client": ["com.niklas2233.minescriptaddon.MinescriptHud", "com.niklas2233.minescriptaddon.MinescriptChat"]
+    "client": ["com.niklas2233.minescriptaddon.MinescriptHud", "com.niklas2233.minescriptaddon.MinescriptChat", "com.niklas2233.minescriptaddon.MinescriptKeys"]
   },
   "mixins": ["minescriptaddon.mixins.json"],
   "depends": {

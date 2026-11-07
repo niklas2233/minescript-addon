@@ -4,8 +4,9 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 
 - **`hud`**: draw text, boxes and items on the HUD.
 - **`chat`**: read every chat line, including the action bar and lines other client mods add, with click actions.
+- **`keys`**: hotkeys. "Minescript key" slots run a command, or deliver presses to a script.
 
-On launch the mod writes `hud.py` and `chat.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud` / `import chat`.
+On launch the mod writes `hud.py`, `chat.py` and `keys.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud` / `import chat` / `import keys`.
 
 ## HUD
 
@@ -85,6 +86,57 @@ Each line is a `chat.Line` with:
 - `hide()` uses a **Java** regex (`find()` on the plain text). It only affects the chat box: the action bar is never hidden, and hidden lines still show up in `lines()`/`wait_for()`/`listen()`. They don't reach `logs/latest.log` either, because they never enter the chat. With `ttl=` seconds the rule expires; refresh it in a loop, and a killed script's rules go away. `0`/`None` keeps it until `unhide()` or restart.
 - Each line is recorded once, even when both Fabric's message event and the chat box see it.
 
+## Keys
+
+The mod registers keybind slots **Minescript key 1 … N** under **Options → Controls → Minescript**. They are unbound at first, and like vanilla keys they do nothing while a screen (inventory, chest, chat) is open. Each slot is set up in `config/minescriptaddon-keys.json`, which is created on first launch:
+
+```json
+{
+  "count": 3,
+  "show_press": true,
+  "keys": {
+    "1": {"label": "Farm", "command": "\\farm"},
+    "2": {"label": "Home", "command": "/home"},
+    "3": {"label": "", "command": ""}
+  }
+}
+```
+
+| Field | |
+|---|---|
+| `count` | how many slots to register (default 3, 0–50). **Takes effect after a restart**, because Minecraft only accepts new keybinds at startup. Raising it adds empty entries to the file; lowering it keeps the extra entries but doesn't register them. |
+| `label` | shown in Controls, e.g. "Minescript key 1 (Farm)". Read at startup only. |
+| `command` | `\script args` runs a Minescript command, exactly as if typed in chat (inside JSON, write the backslash twice: `"\\farm"`). `/command` sends a game command, which also works for client-side commands. Empty: the slot does nothing unless a script claims it. |
+| `show_press` | show presses in the action bar, e.g. "Minescript key 1: \farm" |
+
+`command` and `show_press` are re-read on the next key press after you save the file, so no restart is needed. A missing or broken file is logged as a warning and the defaults are used. A broken file is left as it is, so you can fix it.
+
+From a script, claim a slot and its presses go to the script instead of running the command:
+
+```python
+import keys
+
+try:
+    while True:
+        if keys.wait(1, timeout=30):      # claims slot 1 and keeps renewing the claim while waiting
+            print("pressed", keys.binding(1))
+finally:
+    keys.release(1)
+```
+
+| Function | |
+|---|---|
+| `count()` | how many slots are registered |
+| `claim(slot, ttl=2.0)` | send this slot's presses to the script for `ttl` seconds; renew by calling it again, or through `pressed()`/`wait()` |
+| `pressed(slot)` | presses since the last call (consumes them); claims/renews the slot |
+| `wait(slot, timeout=None)` | `True` on a press, `False` after `timeout` s; polls every 50 ms and keeps the claim alive |
+| `release(slot)` | give the slot back to its command |
+| `binding(slot)` | the bound key's name, e.g. `"R"`, or `""` if unbound |
+
+- The claim expires unless renewed within `ttl`, so a crashed or `\killjob`'d script stops swallowing the key, and the slot's command works again.
+- Presses made before a script claims a slot run the command; they aren't queued for the script.
+- A slot outside `1..count()` raises `ValueError`, and the message includes the current count.
+
 ## In-game checks
 
 Copy these from [`examples/`](examples) into `.minecraft/minescript/`. They aren't installed by the mod.
@@ -103,7 +155,7 @@ Both report in chat whether each step worked, or the exception it raised.
 
 ## Tests & releases
 
-- `python -B -m unittest discover tests` tests `hud.py` and `chat.py` against a stubbed Java bridge.
-- `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal, the chat ring buffer, dedup and hide rules, and Component → text/§ codes/click actions/JSON.
+- `python -B -m unittest discover tests` tests `hud.py`, `chat.py` and `keys.py` against a stubbed Java bridge.
+- `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.2.0 && git push origin v1.2.0`. GitHub Actions then builds `minescriptaddon-1.2.0.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.3.0 && git push origin v1.3.0`. GitHub Actions then builds `minescriptaddon-1.3.0.jar` and attaches it to a GitHub release.

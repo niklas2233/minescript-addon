@@ -25,6 +25,9 @@ processResources {
 
 test {
 	useJUnitPlatform()
+	// Minecraft's log4j config writes logs/ into the working directory; keep it out of the repo root.
+	workingDir = layout.buildDirectory.dir("test-run").get().asFile
+	doFirst { workingDir.mkdirs() }
 }
 
 tasks.withType(JavaCompile).configureEach {
