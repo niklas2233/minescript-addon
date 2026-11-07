@@ -1,4 +1,4 @@
-## Minescript Addon v1.3.1 docs
+## Minescript Addon v1.4.0 docs
 
 Table of contents:
 
@@ -12,6 +12,8 @@ Table of contents:
     - [hud module](#hud-module)
     - [chat module](#chat-module)
     - [keys module](#keys-module)
+    - [alert module](#alert-module)
+    - [inputs module](#inputs-module)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
@@ -27,7 +29,7 @@ Download `minescriptaddon-<version>.jar` from
 (within the **minecraft** folder). When upgrading, delete the old jar first. Very old builds were
 named `minescripthud-*.jar`.
 
-On every launch the mod writes three Python modules into the **minescript** folder, so scripts can
+On every launch the mod writes five Python modules into the **minescript** folder, so scripts can
 import them. Don't edit these files: they're overwritten on the next launch.
 
 | File | Module |
@@ -35,6 +37,8 @@ import them. Don't edit these files: they're overwritten on the next launch.
 | `minecraft/minescript/hud.py` | [hud module](#hud-module) |
 | `minecraft/minescript/chat.py` | [chat module](#chat-module) |
 | `minecraft/minescript/keys.py` | [keys module](#keys-module) |
+| `minecraft/minescript/alert.py` | [alert module](#alert-module) |
+| `minecraft/minescript/inputs.py` | [inputs module](#inputs-module) |
 
 ## In-game usage
 
@@ -119,14 +123,14 @@ Notes:
 - **Ids and prefixes:** HUD elements are identified by string ids. Give each script its own
   prefix (`"farm."`, `"coords."`) so it can clean up only its own elements with
   [`hud.clear(prefix)`](#hudclear).
-- **`ttl`:** HUD elements, chat hide rules and key claims all take `ttl`, the number of seconds
+- **`ttl`:** HUD elements, chat hide rules, key claims and input holds all take `ttl`, the number of seconds
   until they expire unless renewed. Renew them in your script's loop.
   `\killjob` stops a script **without** running `finally:` blocks, so `ttl` is the cleanup that
   always works.
 - **Polling:** scripts reach the mod through Minescript's Java bridge. [`chat.wait_for`](#chatwait_for),
   [`chat.listen`](#chatlisten) and [`keys.wait`](#keyswait) poll about every 50 ms
   (`chat.POLL_SECONDS`, `keys.POLL_SECONDS`).
-- **Leaving a world or server** clears all HUD elements and the chat buffer. Chat hide rules and
+- **Leaving a world or server** clears all HUD elements and the chat buffer, and releases all input holds. Chat hide rules and
   key claims are kept until they expire.
 
 ### hud module
@@ -536,6 +540,113 @@ finally:
 
 Since: v1.3
 
+### alert module
+
+*Usage:* `import alert  # from Python script`
+
+Gets your attention when a script needs you: a sound, a toast in the corner, and a taskbar flash
+when the game window isn't focused. Everything is client-side: the sound plays only for you and the
+chat line is never sent to the server.
+
+- [`alert.alert`](#alertalert)
+
+#### alert.alert
+*Usage:* <code>alert.alert(text: str, sound: bool = True, toast: bool = True, flash: bool = True, chat: bool = False, repeat: int = 1, title: str = "Minescript", sound_id: str = "minecraft:block.note_block.bell", volume: float = 1.0, pitch: float = 1.0)</code>
+
+Alerts the player. Safe to call from any thread: the mod runs it on the game thread.
+
+*Args:*
+
+- `text`: toast text, and the chat line with `chat=True`
+- `sound`: play `sound_id` at `volume` and `pitch`; any sound id works, including resource-pack
+  sounds. An unknown id plays the bell instead and logs a warning.
+- `toast`: show a toast titled `title`
+- `flash`: flash the window in the taskbar if it isn't focused (does nothing when it is)
+- `chat`: also add `text` to the chat box as a client-side line (source `"client"` in the
+  [chat module](#chat-module)); skipped outside a world
+- `repeat`: play the sound this many times, about 0.5 s apart (1–20)
+
+Never raises back into the script: a part that can't run is skipped and logged in
+`logs/latest.log`.
+
+```
+if inventory_full():
+  alert.alert("Inventory full", repeat=3)
+```
+
+Since: v1.4
+
+### inputs module
+
+*Usage:* `import inputs  # from Python script`
+
+Holds vanilla inputs (attack, use, movement…) **that let go when the script dies**. When a script
+presses a key through Minescript and then crashes or is `\killjob`'d, the key stays down until you
+press it yourself. A hold through `inputs` expires unless renewed within its `ttl` (default 1 s).
+
+- [`inputs.held`](#inputsheld)
+- [`inputs.hold`](#inputshold)
+- [`inputs.holding`](#inputsholding)
+- [`inputs.release_all`](#inputsrelease_all)
+
+Keys: `attack`, `use`, `forward`, `back`, `left`, `right`, `jump`, `sneak`, `sprint`, `pick`
+(whatever they're bound to in Controls). Any other name raises `ValueError` listing these.
+
+When a hold ends, the key goes back to its **physical** state: if you're holding it yourself, it
+stays down. Expiry is checked every tick, and everything is released when you leave a server or
+the world changes. Holds keep working while a screen is open.
+
+#### inputs.hold
+*Usage:* <code>inputs.hold(key: str, down: bool = True, ttl: float = 1.0, owner: str = "")</code>
+
+Holds `key` down for `ttl` seconds, or renews the hold. `down=False` releases it at once.
+
+*Args:*
+
+- `ttl`: seconds, must be > 0; call `hold` again within it to keep the key down
+- `owner`: tag for [`release_all`](#inputsrelease_all); the last caller of a key owns it
+
+```
+while mining():
+  inputs.hold("attack", owner="miner")
+  time.sleep(0.2)
+inputs.hold("attack", False)
+```
+
+Since: v1.4
+
+#### inputs.holding
+*Usage:* <code>with inputs.holding(key: str, owner: str = "", ttl: float = 1.0):</code>
+
+Holds `key` for the duration of a `with` block. A background thread renews the hold every
+`ttl / 3` s, and the key is released when the block exits.
+
+```
+with inputs.holding("forward", owner="walker"):
+  time.sleep(5)
+```
+
+Since: v1.4
+
+#### inputs.held
+*Usage:* <code>inputs.held() -> list</code>
+
+Gets the keys held through this module, for debugging.
+
+*Returns:*
+
+- `[(key, owner, seconds_left), ...]`
+
+Since: v1.4
+
+#### inputs.release_all
+*Usage:* <code>inputs.release_all(owner: str = None)</code>
+
+Releases every key held through this module, or only those whose owner **starts with** `owner`.
+Give each script its own owner (`"farm."`) so scripts don't release each other's keys.
+
+Since: v1.4
+
 ## Examples
 
 Each example uses its own id prefix and `ttl`, so it cleans up after itself, even after `\killjob`.
@@ -660,6 +771,11 @@ finally:
 - **`\command` says "Minescript not found":** Minescript is missing, or its version no longer has
   the method this mod uses to run commands. Update both mods.
 - **`ValueError: key slot 4 is outside 1..3`:** raise `count` in the config and restart.
+- **No alert sound:** check the **Master** volume. An unknown `sound_id` plays the bell and logs a
+  warning.
+- **No taskbar flash:** it only flashes while the game window isn't focused.
+- **A held key stops after a second:** renew it with `hold()` within `ttl`, or use
+  [`inputs.holding`](#inputsholding).
 
 Report bugs at <https://github.com/niklas2233/minescript-addon/issues> with your Minecraft,
 Fabric API, Minescript and Minescript Addon versions, a minimal script, and the relevant part of

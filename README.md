@@ -5,10 +5,12 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 - **`hud`**: draw text, boxes and items on the HUD.
 - **`chat`**: read every chat line, including the action bar and lines other client mods add, with click actions.
 - **`keys`**: hotkeys. "Minescript key" slots run a command, or deliver presses to a script.
+- **`alert`**: get the player's attention: a sound only you hear, a toast, a taskbar flash.
+- **`inputs`**: hold attack/use/movement keys that let go when the script crashes or is killed.
 
 **📖 Full scripting docs: [docs/README.md](docs/README.md)**: every function, the config file, examples and troubleshooting.
 
-On launch the mod writes `hud.py`, `chat.py` and `keys.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud` / `import chat` / `import keys`.
+On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py` and `inputs.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert` or `import inputs`.
 
 ## HUD
 
@@ -139,6 +141,44 @@ finally:
 - Presses made before a script claims a slot run the command; they aren't queued for the script.
 - A slot outside `1..count()` raises `ValueError`, and the message includes the current count.
 
+## Alerts
+
+```python
+import alert
+alert.alert("Inventory full")                       # bell, toast, taskbar flash if the window isn't focused
+alert.alert("Farm stopped", repeat=3, chat=True)    # ring 3 times 0.5 s apart, plus a client-side chat line
+```
+
+`alert(text, sound=True, toast=True, flash=True, chat=False, repeat=1, title="Minescript", sound_id="minecraft:block.note_block.bell", volume=1.0, pitch=1.0)`
+
+- Everything is client-side: the sound plays only for you, the chat line is never sent.
+- `flash` only flashes the taskbar while the game window isn't focused.
+- An unknown `sound_id` plays the bell and logs a warning. Nothing raises back into the script.
+
+## Inputs
+
+When a script holds a key through Minescript and then crashes or is `\killjob`'d, the key stays pressed. `inputs` holds expire unless renewed:
+
+```python
+import inputs, time
+with inputs.holding("attack", owner="miner"):      # renewed in the background, released on exit
+    time.sleep(10)
+
+inputs.hold("forward", ttl=1.0, owner="miner")     # or renew it yourself within ttl
+inputs.hold("forward", False)                      # release now
+```
+
+| Function | |
+|---|---|
+| `hold(key, down=True, ttl=1.0, owner="")` | hold `key` for `ttl` s (call again to renew); `down=False` releases |
+| `holding(key, owner="", ttl=1.0)` | `with` block that renews from a daemon thread |
+| `release_all(owner=None)` | everything, or only owners starting with `owner` |
+| `held()` | `[(key, owner, seconds_left), ...]` |
+
+- Keys: `attack`, `use`, `forward`, `back`, `left`, `right`, `jump`, `sneak`, `sprint`, `pick`. Others raise `ValueError`.
+- Letting go restores the physical state, so a key you hold yourself stays down.
+- All holds are released on disconnect and when the world changes.
+
 ## In-game checks
 
 Copy these from [`examples/`](examples) into `.minecraft/minescript/`. They aren't installed by the mod.
@@ -157,7 +197,7 @@ Both report in chat whether each step worked, or the exception it raised.
 
 ## Tests & releases
 
-- `python -B -m unittest discover tests` tests `hud.py`, `chat.py` and `keys.py` against a stubbed Java bridge.
-- `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry.
+- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py` and `inputs.py` against a stubbed Java bridge.
+- `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.3.0 && git push origin v1.3.0`. GitHub Actions then builds `minescriptaddon-1.3.0.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.4.0 && git push origin v1.4.0`. GitHub Actions then builds `minescriptaddon-1.4.0.jar` and attaches it to a GitHub release.
