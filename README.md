@@ -11,10 +11,11 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 - **`screen_info`**: read the sidebar scoreboard, the tab list and the title on screen.
 - **`status`**: one shared HUD panel where every script shows a status line that goes away when the script dies.
 - **`screens`**: wait for a container screen, read its items (name, lore, custom data) and click slots.
+- **`settings`**: per-script settings in a JSON file, with an in-game editor (`/msettings <script>`).
 
 **📖 Full scripting docs: [docs/README.md](docs/README.md)**: every function, the config file, examples and troubleshooting.
 
-On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py` and `screens.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks`, `import screen_info`, `import status` or `import screens`.
+On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py` and `settings.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks`, `import screen_info`, `import status`, `import screens` or `import settings`.
 
 ## HUD
 
@@ -247,6 +248,23 @@ if screens.wait_for(r"Shop", timeout=5):               # open, and its contents 
 | `click_item(..., button="left")` | `find` + `click`; `True` if it clicked |
 | `close()` | close the screen like Escape |
 
+## Settings
+
+```python
+import settings
+s = settings.load("farm", defaults={"radius": 8, "speed": 1.5, "crops": ["wheat", "carrots"], "sneak": True})
+s["radius"]            # 8
+s["radius"] = 12       # saved at once (atomic write)
+if s.changed():        # someone edited the file, e.g. with /msettings farm
+    s.reload()
+```
+
+- Saved in `config/minescriptaddon-settings/<script>.json`, created from the defaults on first use. Keys missing from the file get their default; keys only in the file are kept.
+- Values are `bool`, `int`, `float`, `str` or lists of those, of their default's type (`int` is fine for a `float`); anything else raises `TypeError`.
+- `s.get(key, default)`, `"key" in s`, `s.as_dict()`, `s.changed()`, `s.reload()`.
+- A broken file gives the defaults with a warning and is left as is.
+- **`/msettings <script>`** opens an in-game editor (tab-completes): toggles, text and number fields, comma-separated lists. Invalid fields turn red and disable Save.
+
 ## In-game checks
 
 Copy these from [`examples/`](examples) into `.minecraft/minescript/`. They aren't installed by the mod.
@@ -265,7 +283,7 @@ Both report in chat whether each step worked, or the exception it raised.
 
 ## Tests & releases
 
-- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py` and `screens.py` against a stubbed Java bridge.
+- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py` and `settings.py` against a stubbed Java bridge.
 - `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.8.1 && git push origin v1.8.1`. GitHub Actions then builds `minescriptaddon-1.8.1.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.9.0 && git push origin v1.9.0`. GitHub Actions then builds `minescriptaddon-1.9.0.jar` and attaches it to a GitHub release.

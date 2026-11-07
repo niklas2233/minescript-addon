@@ -5,12 +5,14 @@ import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
+import net.minecraft.client.gui.screens.Screen;
 
 import java.lang.reflect.Field;
 
 /**
  * Lookups that moved between 26.x versions. In 26.1 Gui owns the chat, tab list, titles and F1 state; 26.2
- * moved them to Gui.hud (class Hud) and replaced Options.hideGui with Hud.isHidden(). Checked by VersionCompatTest.
+ * moved them to Gui.hud (class Hud), replaced Options.hideGui with Hud.isHidden() and moved Minecraft.setScreen to
+ * Gui.setScreen. Checked by VersionCompatTest.
  */
 final class Compat {
 	static final Field HUD_FIELD = hudField(); // null in 26.1
@@ -41,6 +43,19 @@ final class Compat {
 		if (HUD_FIELD != null) return (boolean) call(hud(mc), "isHidden");
 		try {
 			return Options.class.getField("hideGui").getBoolean(mc.options);
+		} catch (ReflectiveOperationException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
+	/** Minecraft.setScreen in 26.1, Gui.setScreen in 26.2+. */
+	static void setScreen(Minecraft mc, Screen screen) {
+		try {
+			try {
+				Gui.class.getMethod("setScreen", Screen.class).invoke(mc.gui, screen);
+			} catch (NoSuchMethodException e) {
+				Minecraft.class.getMethod("setScreen", Screen.class).invoke(mc, screen);
+			}
 		} catch (ReflectiveOperationException e) {
 			throw new IllegalStateException(e);
 		}

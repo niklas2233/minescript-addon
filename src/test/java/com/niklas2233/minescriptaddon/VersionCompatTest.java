@@ -25,6 +25,8 @@ class VersionCompatTest {
 		net.minecraft.client.gui.components.ChatComponent.class.getMethod("addClientSystemMessage", net.minecraft.network.chat.Component.class);
 		if (Compat.HUD_FIELD == null) net.minecraft.client.Options.class.getField("hideGui");
 		else hud.getMethod("isHidden");
+		Class<?> screenOwner = Compat.HUD_FIELD == null ? net.minecraft.client.Minecraft.class : net.minecraft.client.gui.Gui.class;
+		screenOwner.getMethod("setScreen", net.minecraft.client.gui.screens.Screen.class);
 	}
 
 	@Test

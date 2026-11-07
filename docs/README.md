@@ -1,4 +1,4 @@
-## Minescript Addon v1.8.1 docs
+## Minescript Addon v1.9.0 docs
 
 Table of contents:
 
@@ -18,6 +18,7 @@ Table of contents:
     - [screen_info module](#screen_info-module)
     - [status module](#status-module)
     - [screens module](#screens-module)
+    - [settings module](#settings-module)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
@@ -33,7 +34,7 @@ Download `minescriptaddon-<version>.jar` from
 (within the **minecraft** folder). When upgrading, delete the old jar first. Very old builds were
 named `minescripthud-*.jar`.
 
-On every launch the mod writes nine Python modules into the **minescript** folder, so scripts can
+On every launch the mod writes ten Python modules into the **minescript** folder, so scripts can
 import them. Don't edit these files: they're overwritten on the next launch.
 
 | File | Module |
@@ -47,6 +48,7 @@ import them. Don't edit these files: they're overwritten on the next launch.
 | `minecraft/minescript/screen_info.py` | [screen_info module](#screen_info-module) |
 | `minecraft/minescript/status.py` | [status module](#status-module) |
 | `minecraft/minescript/screens.py` | [screens module](#screens-module) |
+| `minecraft/minescript/settings.py` | [settings module](#settings-module) |
 
 ## In-game usage
 
@@ -956,6 +958,71 @@ Closes the open screen like Escape. A container is closed on the server too.
 
 Since: v1.8
 
+### settings module
+
+*Usage:* `import settings  # from Python script`
+
+**Per-script settings** saved as JSON in `minecraft/config/minescriptaddon-settings/<script>.json`, and
+editable in game with [`/msettings <script>`](#msettings-command).
+
+- [`settings.load`](#settingsload)
+- [`Settings`](#settings)
+- [`/msettings`](#msettings-command)
+
+```
+s = settings.load("farm", defaults={"radius": 8, "speed": 1.5, "crops": ["wheat", "carrots"], "sneak": True})
+while True:
+  if s.changed():   # edited with /msettings farm
+    s.reload()
+  farm(s["radius"], s["crops"])
+```
+
+#### settings.load
+*Usage:* <code>settings.load(name: str, defaults: dict = None) -> Settings</code>
+
+Loads the settings of script `name` from `<name>.json`. On first use the file is created from `defaults`.
+Keys missing from the file get their default (and are added to the file); keys only in the file are kept.
+
+*Args:*
+
+- `name`: letters, digits, `_`, `.` and `-`; anything else (like a path) raises `ValueError`
+- `defaults`: values are `bool`, `int`, `float`, `str` or a list of those; anything else raises `TypeError`
+
+A broken file (not JSON, or not a JSON object) doesn't raise: it prints a warning, gives the defaults and is
+left as is so you can fix it. A value in the file of the wrong type also gives its default with a warning.
+
+Since: v1.9
+
+#### Settings
+Dict-like settings of one script, returned by [`load`](#settingsload).
+
+| | |
+|---|---|
+| `s["key"]` | the value (`KeyError` if missing); lists are copies |
+| `s["key"] = value` | sets and **saves at once** |
+| `s.get(key, default=None)`, `key in s` | like a dict |
+| `s.as_dict()` | a copy of every setting |
+| `s.changed()` | `True` if the file changed on disk since the last load, reload or save |
+| `s.reload()` | re-reads the file |
+
+A value must be `bool`, `int`, `float`, `str` or a list of those, and of its default's type, or setting it
+raises `TypeError` (an `int` is fine where the default is a `float`, and is stored as one). If a list's
+default holds one element type, the elements must have that type too. Saves are atomic (a temp file, then a
+rename), so the editor or another script never reads half a file.
+
+Since: v1.9
+
+#### /msettings command
+*Usage:* `/msettings <script>` (tab-completes scripts that have a settings file)
+
+Opens an editor for `<script>.json`: an ON/OFF toggle for `bool`, a text field for `str`, a number field for
+`int`/`float`, and a comma-separated field for lists. Invalid input turns the field red (hover it for why) and
+disables **Save**. Saving writes the file atomically; a running script sees the change through
+[`changed()`/`reload()`](#settings). Keys that aren't a setting type (kept from the file) are shown but can't
+be edited. List items can't contain commas in the editor.
+
+Since: v1.9
+
 ## Examples
 
 Each example uses its own id prefix and `ttl`, so it cleans up after itself, even after `\killjob`.
@@ -1087,6 +1154,8 @@ finally:
   [`inputs.holding`](#inputsholding).
 - **`screens.wait_for` returns too early on an empty-looking menu:** contents count as arrived
   after 0.5 s even if empty. Wait for a specific item with `screens.find()` in a loop.
+- **`/msettings` says there are no settings yet:** the file is created the first time a script
+  calls `settings.load("<script>", ...)`.
 
 Report bugs at <https://github.com/niklas2233/minescript-addon/issues> with your Minecraft,
 Fabric API, Minescript and Minescript Addon versions, a minimal script, and the relevant part of
