@@ -1,4 +1,4 @@
-## Minescript Addon v1.7.0 docs
+## Minescript Addon v1.8.0 docs
 
 Table of contents:
 
@@ -17,6 +17,7 @@ Table of contents:
     - [ticks module](#ticks-module)
     - [screen_info module](#screen_info-module)
     - [status module](#status-module)
+    - [screens module](#screens-module)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
@@ -32,7 +33,7 @@ Download `minescriptaddon-<version>.jar` from
 (within the **minecraft** folder). When upgrading, delete the old jar first. Very old builds were
 named `minescripthud-*.jar`.
 
-On every launch the mod writes eight Python modules into the **minescript** folder, so scripts can
+On every launch the mod writes nine Python modules into the **minescript** folder, so scripts can
 import them. Don't edit these files: they're overwritten on the next launch.
 
 | File | Module |
@@ -45,6 +46,7 @@ import them. Don't edit these files: they're overwritten on the next launch.
 | `minecraft/minescript/ticks.py` | [ticks module](#ticks-module) |
 | `minecraft/minescript/screen_info.py` | [screen_info module](#screen_info-module) |
 | `minecraft/minescript/status.py` | [status module](#status-module) |
+| `minecraft/minescript/screens.py` | [screens module](#screens-module) |
 
 ## In-game usage
 
@@ -848,6 +850,112 @@ Removes the line `name` now.
 
 Since: v1.7
 
+### screens module
+
+*Usage:* `import screens  # from Python script`
+
+The open screen (chest, shop menu, inventory…) and its container slots. Clicks are the game's own
+slot clicks, the same as clicking with the mouse, without moving the cursor. Names and lore are
+plain text.
+
+- [`screens.click`](#screensclick)
+- [`screens.click_item`](#screensclick_item)
+- [`screens.close`](#screensclose)
+- [`screens.find`](#screensfind)
+- [`screens.items`](#screensitems)
+- [`screens.title`](#screenstitle)
+- [`screens.wait_for`](#screenswait_for)
+
+```
+minescript.execute("/menu")
+if screens.wait_for(r"Shop", timeout=5):
+  if not screens.click_item(name_regex=r"^Diamond Sword$", button="shift"):
+    minescript.echo("not for sale")
+  screens.close()
+```
+
+#### screens.title
+*Usage:* <code>screens.title() -> str</code>
+
+Gets the open screen's title, or `""` if no screen is open.
+
+Since: v1.8
+
+#### screens.wait_for
+*Usage:* <code>screens.wait_for(title_regex: str, timeout: float = 10) -> bool</code>
+
+Waits until a screen whose title matches `title_regex` (Python `re.search`) is open and, for a
+container, its contents have arrived from the server: a non-empty container slot, or 0.5 s after the
+screen opened (for empty containers). Polls about every 50 ms (`screens.POLL_SECONDS`).
+
+*Returns:*
+
+- `True`, or `False` after `timeout` seconds
+
+Since: v1.8
+
+#### screens.items
+*Usage:* <code>screens.items() -> list</code>
+
+Gets the non-empty slots of the open container: first the container's own slots, then the player's
+inventory (flagged `"player": True`).
+
+*Returns:*
+
+- `[{"slot": int, "id": str, "count": int, "name": str, "lore": [str, ...], "custom_data": dict or None, "player": bool}, ...]`
+- `slot` is the number to pass to [`click`](#screensclick); `id` e.g. `"minecraft:diamond_sword"`;
+  `custom_data` is the item's `minecraft:custom_data` as JSON (NBT number types are lost), or `None`
+- `[]` when no container screen is open
+
+Since: v1.8
+
+#### screens.find
+*Usage:* <code>screens.find(name_regex: str = None, id: str = None, lore_regex: str = None)</code>
+
+Gets the first slot from [`items`](#screensitems) that matches every given filter: `name_regex`
+searched in the name, `id` equal to the item id (`"diamond"` means `"minecraft:diamond"`), and
+`lore_regex` searched in any lore line.
+
+*Returns:*
+
+- the slot's dict, or `None`
+
+Since: v1.8
+
+#### screens.click
+*Usage:* <code>screens.click(slot: int, button: str = "left") -> bool</code>
+
+Clicks `slot` in the open container.
+
+*Args:*
+
+- `button`: `"left"` (pick up / put down), `"right"` (half / one), `"shift"` (quick move),
+  `"middle"` (clone, creative only); anything else raises `ValueError`
+
+*Returns:*
+
+- `False` if no container is open or the slot doesn't exist
+
+Since: v1.8
+
+#### screens.click_item
+*Usage:* <code>screens.click_item(name_regex: str = None, id: str = None, lore_regex: str = None, button: str = "left") -> bool</code>
+
+[`find`](#screensfind) then [`click`](#screensclick).
+
+*Returns:*
+
+- `True` if a matching slot was clicked
+
+Since: v1.8
+
+#### screens.close
+*Usage:* <code>screens.close()</code>
+
+Closes the open screen like Escape. A container is closed on the server too.
+
+Since: v1.8
+
 ## Examples
 
 Each example uses its own id prefix and `ttl`, so it cleans up after itself, even after `\killjob`.
@@ -977,6 +1085,8 @@ finally:
 - **No taskbar flash:** it only flashes while the game window isn't focused.
 - **A held key stops after a second:** renew it with `hold()` within `ttl`, or use
   [`inputs.holding`](#inputsholding).
+- **`screens.wait_for` returns too early on an empty-looking menu:** contents count as arrived
+  after 0.5 s even if empty. Wait for a specific item with `screens.find()` in a loop.
 
 Report bugs at <https://github.com/niklas2233/minescript-addon/issues> with your Minecraft,
 Fabric API, Minescript and Minescript Addon versions, a minimal script, and the relevant part of

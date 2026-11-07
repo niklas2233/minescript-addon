@@ -30,6 +30,7 @@ public class MinescriptChat implements ClientModInitializer {
 	// The open screen, tracked with Fabric events: Minecraft's own accessor differs between 26.x versions
 	// (public field in 26.1, screen() method in 26.2).
 	private static volatile Screen openScreen;
+	private static volatile long screenOpenedNanos; // when openScreen was first shown (not re-inits on resize)
 
 	static {
 		for (char code : "0123456789abcdef".toCharArray()) {
@@ -47,6 +48,7 @@ public class MinescriptChat implements ClientModInitializer {
 		});
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> LOG.clear());
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
+			if (openScreen != screen) screenOpenedNanos = System.nanoTime();
 			openScreen = screen;
 			ScreenEvents.remove(screen).register(removed -> {
 				if (openScreen == removed) openScreen = null;
@@ -103,6 +105,16 @@ public class MinescriptChat implements ClientModInitializer {
 	/** True while any screen (inventory, chest, chat, menu) is open. */
 	static boolean screenOpen() {
 		return openScreen != null;
+	}
+
+	/** The open screen, or null. */
+	static Screen openScreen() {
+		return openScreen;
+	}
+
+	/** System.nanoTime() when the open screen was shown. */
+	static long screenOpenedNanos() {
+		return screenOpenedNanos;
 	}
 
 	// --- Capture

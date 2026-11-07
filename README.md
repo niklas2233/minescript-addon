@@ -10,10 +10,11 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 - **`ticks`**: count client ticks and wait for the next one without polling.
 - **`screen_info`**: read the sidebar scoreboard, the tab list and the title on screen.
 - **`status`**: one shared HUD panel where every script shows a status line that goes away when the script dies.
+- **`screens`**: wait for a container screen, read its items (name, lore, custom data) and click slots.
 
 **📖 Full scripting docs: [docs/README.md](docs/README.md)**: every function, the config file, examples and troubleshooting.
 
-On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py` and `status.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks`, `import screen_info` or `import status`.
+On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py` and `screens.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks`, `import screen_info`, `import status` or `import screens`.
 
 ## HUD
 
@@ -226,6 +227,26 @@ status.clear("farm")
 - Hidden with the rest of the HUD (F1) and while the debug screen is open.
 - `config/minescriptaddon-status.json` (created on first launch, re-read within a second after you save it): `{"enabled": true, "corner": "top_left", "x": 4, "y": 4, "opacity": 0.5}`. `corner` is `top_left`, `top_right`, `bottom_left` or `bottom_right`; `x`/`y` count inwards from it; `opacity` is the background's, 0–1.
 
+## Screens and containers
+
+```python
+import screens, minescript
+minescript.execute("/menu")
+if screens.wait_for(r"Shop", timeout=5):               # open, and its contents have arrived
+    screens.click_item(name_regex=r"^Diamond Sword$", button="shift")
+    screens.close()
+```
+
+| Function | |
+|---|---|
+| `title()` | open screen's title, `""` if none |
+| `wait_for(title_regex, timeout=10)` | `True` once a matching screen is open and its contents arrived (a non-empty slot, or 0.5 s) |
+| `items()` | `[{"slot", "id", "count", "name", "lore", "custom_data", "player"}]`, container slots first, then the player's (`"player": True`) |
+| `find(name_regex=None, id=None, lore_regex=None)` | first matching slot or `None`; `id="diamond"` means `minecraft:diamond` |
+| `click(slot, button="left")` | `"left"`, `"right"`, `"shift"`, `"middle"`: the game's own slot click, no cursor movement |
+| `click_item(..., button="left")` | `find` + `click`; `True` if it clicked |
+| `close()` | close the screen like Escape |
+
 ## In-game checks
 
 Copy these from [`examples/`](examples) into `.minecraft/minescript/`. They aren't installed by the mod.
@@ -244,7 +265,7 @@ Both report in chat whether each step worked, or the exception it raised.
 
 ## Tests & releases
 
-- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py` and `status.py` against a stubbed Java bridge.
+- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py` and `screens.py` against a stubbed Java bridge.
 - `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.7.0 && git push origin v1.7.0`. GitHub Actions then builds `minescriptaddon-1.7.0.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.8.0 && git push origin v1.8.0`. GitHub Actions then builds `minescriptaddon-1.8.0.jar` and attaches it to a GitHub release.

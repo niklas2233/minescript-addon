@@ -3,7 +3,7 @@
   "id": "minescriptaddon",
   "version": "${version}",
   "name": "Minescript Addon",
-  "description": "Gives Minescript scripts a HUD, every chat line (including the action bar and lines other mods add), hotkeys, alerts, inputs that let go when a script dies, client ticks, the sidebar, tab list and titles, and a shared status panel.",
+  "description": "Gives Minescript scripts a HUD, every chat line (including the action bar and lines other mods add), hotkeys, alerts, inputs that let go when a script dies, client ticks, the sidebar, tab list and titles, a shared status panel, and inventory and screen helpers.",
   "authors": ["niklas2233"],
   "license": "MIT",
   "environment": "client",
