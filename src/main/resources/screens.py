@@ -8,7 +8,8 @@ on launch).
             print("bought")
         screens.close()
 
-items() lists the open container's non-empty slots, then the player's inventory slots (flagged "player": True).
+items() lists the open container's non-empty slots, then the player's inventory slots (flagged "player": True);
+each also has "damage" and "max_damage" (0 without durability), the same item dicts as inventory.py.
 "slot" is the number to pass to click(). Clicks are the game's own slot clicks (like clicking with the mouse,
 without moving the cursor). Names and lore are plain text.
 """
@@ -45,8 +46,9 @@ def wait_for(title_regex: str, timeout: float = 10) -> bool:
 
 
 def items() -> list:
-    """[{"slot", "id", "count", "name", "lore": [str], "custom_data": dict or None, "player": bool}, ...] for the
-    non-empty slots of the open container (container slots first); [] if no container is open."""
+    """[{"slot", "id", "count", "name", "lore": [str], "custom_data": dict or None, "damage", "max_damage",
+    "player": bool}, ...] for the non-empty slots of the open container (container slots first); [] if no container
+    is open."""
     return json.loads(_Screens.items())
 
 
@@ -54,20 +56,22 @@ def _id(item_id: str) -> str:
     return item_id if ":" in item_id else "minecraft:" + item_id
 
 
+def matcher(name_regex: str = None, id: str = None, lore_regex: str = None):
+    """A predicate item -> bool for find() here and in inventory.py: the name matches name_regex (re.search in
+    the plain text), the id is id ("diamond" means "minecraft:diamond") and a lore line matches lore_regex.
+    Omitted filters match anything."""
+    name = name_regex and re.compile(name_regex)
+    lore = lore_regex and re.compile(lore_regex)
+    item_id = id and _id(id)
+    return lambda item: ((not name or name.search(item["name"]) is not None)
+                         and (not item_id or item["id"] == item_id)
+                         and (not lore or any(lore.search(line) for line in item["lore"])))
+
+
 def find(name_regex: str = None, id: str = None, lore_regex: str = None):
     """The first slot (see items()) whose name matches name_regex, whose id is id ("diamond" means
     "minecraft:diamond") and with a lore line matching lore_regex. Omitted filters match anything. None if none."""
-    name = name_regex and re.compile(name_regex)
-    lore = lore_regex and re.compile(lore_regex)
-    for item in items():
-        if name and not name.search(item["name"]):
-            continue
-        if id and item["id"] != _id(id):
-            continue
-        if lore and not any(lore.search(line) for line in item["lore"]):
-            continue
-        return item
-    return None
+    return next(filter(matcher(name_regex, id, lore_regex), items()), None)
 
 
 def click(slot: int, button: str = "left") -> bool:

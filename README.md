@@ -13,10 +13,11 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 - **`screens`**: wait for a container screen, read its items (name, lore, custom data) and click slots.
 - **`settings`**: per-script settings in a JSON file, with an in-game editor (`/msettings <script>`).
 - **`world_events`**: the sounds the client plays and the particles the server sends: wait for one, list them or listen.
+- **`inventory`**: read the player's own items, hotbar, armor and held items with no screen open.
 
 **📖 Full scripting docs: [docs/README.md](docs/README.md)**: every function, the config file, examples and troubleshooting.
 
-On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py`, `settings.py` and `world_events.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks`, `import screen_info`, `import status`, `import screens`, `import settings` or `import world_events`.
+On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py`, `settings.py`, `world_events.py` and `inventory.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks`, `import screen_info`, `import status`, `import screens`, `import settings`, `import world_events` or `import inventory`.
 
 ## HUD
 
@@ -243,7 +244,7 @@ if screens.wait_for(r"Shop", timeout=5):               # open, and its contents 
 |---|---|
 | `title()` | open screen's title, `""` if none |
 | `wait_for(title_regex, timeout=10)` | `True` once a matching screen is open and its contents arrived (a non-empty slot, or 0.5 s) |
-| `items()` | `[{"slot", "id", "count", "name", "lore", "custom_data", "player"}]`, container slots first, then the player's (`"player": True`) |
+| `items()` | `[{"slot", "id", "count", "name", "lore", "custom_data", "damage", "max_damage", "player"}]`, container slots first, then the player's (`"player": True`) |
 | `find(name_regex=None, id=None, lore_regex=None)` | first matching slot or `None`; `id="diamond"` means `minecraft:diamond` |
 | `click(slot, button="left")` | `"left"`, `"right"`, `"shift"`, `"middle"`: the game's own slot click, no cursor movement |
 | `click_item(..., button="left")` | `find` + `click`; `True` if it clicked |
@@ -289,6 +290,32 @@ l.stop()
 - Sounds: every sound the client plays, from the server and its own (UI, footsteps, music): `seq`, `time`, `id`, `category`, `x`/`y`/`z`, `volume`, `pitch`, `relative`. Particles: those from server packets: `seq`, `time`, `id`, `x`/`y`/`z`, `count`.
 - Last 500 of each, cleared when you leave a server; seq numbers never reset. `near=(x, y, z)` and `radius` (blocks) go together. Nothing the game plays or shows is changed.
 
+## Inventory
+
+```python
+import inventory
+sword = inventory.find(id="diamond_sword", where="hotbar")
+if sword and sword["max_damage"] - sword["damage"] < 50:
+    print("sword almost broken")
+print(inventory.count(id="wheat"), "wheat")
+bread = inventory.wait_for(name_regex=r"^Enchanted Bread$", timeout=30)
+```
+
+The player's own inventory, no screen needed, read only. Items are the same dicts as `screens.items()`: `{"slot", "id", "count", "name", "lore", "custom_data", "damage", "max_damage"}` (`damage`/`max_damage` 0 without durability), with `slot` 0–8 hotbar, 9–35 main, 36–39 feet/legs/chest/head, 40 offhand.
+
+| Function | |
+|---|---|
+| `items()` | every non-empty item, by slot |
+| `hotbar()` | 9 entries, item dict or `None` |
+| `selected()` | selected hotbar slot, 0–8 |
+| `held(hand="main")` | item in the `"main"` or `"off"` hand, or `None` |
+| `equipment()` | `{"head", "chest", "legs", "feet", "mainhand", "offhand"}`: item dict or `None` |
+| `find(name_regex=None, id=None, lore_regex=None, where="all")` | first match like `screens.find`; `where`: `"all"`, `"hotbar"`, `"main"`, `"armor"` |
+| `count(id=None, name_regex=None)` | total count of matching items |
+| `wait_for(name_regex=None, id=None, lore_regex=None, timeout=None, where="all")` | the item once it appears, or `None` after `timeout` |
+
+Without a player (main menu, loading) results are empty or `None`. Bad arguments raise `ValueError`.
+
 ## In-game checks
 
 Copy these from [`examples/`](examples) into `.minecraft/minescript/`. They aren't installed by the mod.
@@ -307,7 +334,7 @@ Both report in chat whether each step worked, or the exception it raised.
 
 ## Tests & releases
 
-- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py`, `settings.py` and `world_events.py` against a stubbed Java bridge.
+- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py`, `settings.py`, `world_events.py` and `inventory.py` against a stubbed Java bridge.
 - `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.10.0 && git push origin v1.10.0`. GitHub Actions then builds `minescriptaddon-1.10.0.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.11.0 && git push origin v1.11.0`. GitHub Actions then builds `minescriptaddon-1.11.0.jar` and attaches it to a GitHub release.

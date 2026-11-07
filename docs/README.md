@@ -1,4 +1,4 @@
-## Minescript Addon v1.10.0 docs
+## Minescript Addon v1.11.0 docs
 
 Table of contents:
 
@@ -20,6 +20,7 @@ Table of contents:
     - [screens module](#screens-module)
     - [settings module](#settings-module)
     - [world_events module](#world_events-module)
+    - [inventory module](#inventory-module)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
@@ -35,7 +36,7 @@ Download `minescriptaddon-<version>.jar` from
 (within the **minecraft** folder). When upgrading, delete the old jar first. Very old builds were
 named `minescripthud-*.jar`.
 
-On every launch the mod writes eleven Python modules into the **minescript** folder, so scripts can
+On every launch the mod writes twelve Python modules into the **minescript** folder, so scripts can
 import them. Don't edit these files: they're overwritten on the next launch.
 
 | File | Module |
@@ -51,6 +52,7 @@ import them. Don't edit these files: they're overwritten on the next launch.
 | `minecraft/minescript/screens.py` | [screens module](#screens-module) |
 | `minecraft/minescript/settings.py` | [settings module](#settings-module) |
 | `minecraft/minescript/world_events.py` | [world_events module](#world_events-module) |
+| `minecraft/minescript/inventory.py` | [inventory module](#inventory-module) |
 
 ## In-game usage
 
@@ -906,9 +908,11 @@ inventory (flagged `"player": True`).
 
 *Returns:*
 
-- `[{"slot": int, "id": str, "count": int, "name": str, "lore": [str, ...], "custom_data": dict or None, "player": bool}, ...]`
+- `[{"slot": int, "id": str, "count": int, "name": str, "lore": [str, ...], "custom_data": dict or None, "damage": int, "max_damage": int, "player": bool}, ...]`
 - `slot` is the number to pass to [`click`](#screensclick); `id` e.g. `"minecraft:diamond_sword"`;
-  `custom_data` is the item's `minecraft:custom_data` as JSON (NBT number types are lost), or `None`
+  `custom_data` is the item's `minecraft:custom_data` as JSON (NBT number types are lost), or `None`;
+  `damage`/`max_damage` are 0 for items without durability (since v1.11). The same dicts as
+  [`inventory.items`](#inventoryitems).
 - `[]` when no container screen is open
 
 Since: v1.8
@@ -1144,6 +1148,120 @@ A recorded particle packet: `seq`, `time`, `id` (e.g. `"minecraft:flame"`), `x`,
 in the packet; 0 means one).
 
 Since: v1.10
+
+### inventory module
+
+*Usage:* `import inventory  # from Python script`
+
+The player's **own inventory**, read at any time with no screen open. Read only: nothing here moves or changes
+items. Items are the same dicts as [`screens.items`](#screensitems) (without `"player"`), with `slot` in the
+inventory's own numbering:
+
+| Slots | |
+|---|---|
+| 0–8 | hotbar |
+| 9–35 | main inventory |
+| 36, 37, 38, 39 | feet, legs, chest, head |
+| 40 | offhand |
+
+Without a player (main menu, loading) every function returns empty results or `None` instead of raising.
+
+- [`inventory.count`](#inventorycount)
+- [`inventory.equipment`](#inventoryequipment)
+- [`inventory.find`](#inventoryfind)
+- [`inventory.held`](#inventoryheld)
+- [`inventory.hotbar`](#inventoryhotbar)
+- [`inventory.items`](#inventoryitems)
+- [`inventory.selected`](#inventoryselected)
+- [`inventory.wait_for`](#inventorywait_for)
+
+```
+sword = inventory.find(id="diamond_sword", where="hotbar")
+if sword and sword["max_damage"] - sword["damage"] < 50:
+  minescript.echo("sword almost broken")
+minescript.echo(f"{inventory.count(id='wheat')} wheat")
+```
+
+#### inventory.items
+*Usage:* <code>inventory.items() -> list</code>
+
+Every non-empty item, by slot.
+
+*Returns:*
+
+- `[{"slot": int, "id": str, "count": int, "name": str, "lore": [str, ...], "custom_data": dict or None, "damage": int, "max_damage": int}, ...]`
+- `damage` and `max_damage` are 0 for items without durability; the item breaks when `damage` reaches `max_damage`
+- `[]` without a player
+
+Since: v1.11
+
+#### inventory.hotbar
+*Usage:* <code>inventory.hotbar() -> list</code>
+
+9 entries, index = hotbar slot 0–8: the item dict or `None`.
+
+Since: v1.11
+
+#### inventory.selected
+*Usage:* <code>inventory.selected() -> int</code>
+
+The selected hotbar slot, 0–8, or `None` without a player.
+
+Since: v1.11
+
+#### inventory.held
+*Usage:* <code>inventory.held(hand: str = "main")</code>
+
+The item in the `"main"` or `"off"` hand, or `None`. Any other `hand` raises `ValueError`.
+
+Since: v1.11
+
+#### inventory.equipment
+*Usage:* <code>inventory.equipment() -> dict</code>
+
+What the game counts as worn and held, read through the player's equipment slots.
+
+*Returns:*
+
+- `{"head", "chest", "legs", "feet", "mainhand", "offhand"}`, each an item dict (its `slot` is where it sits in the
+  inventory) or `None`
+
+Since: v1.11
+
+#### inventory.find
+*Usage:* <code>inventory.find(name_regex: str = None, id: str = None, lore_regex: str = None, where: str = "all")</code>
+
+The first item (by slot) matching every given filter, like [`screens.find`](#screensfind): `name_regex` and
+`lore_regex` are searched in the plain text, `id` works with or without `"minecraft:"`.
+
+*Args:*
+
+- `where`: `"all"` (0–40), `"hotbar"` (0–8), `"main"` (9–35) or `"armor"` (36–39)
+- at least one filter is required; none, or an unknown `where`, raises `ValueError`
+
+*Returns:*
+
+- the item dict, or `None`
+
+Since: v1.11
+
+#### inventory.count
+*Usage:* <code>inventory.count(id: str = None, name_regex: str = None) -> int</code>
+
+Total count of matching items across the whole inventory (no filter: every item).
+
+Since: v1.11
+
+#### inventory.wait_for
+*Usage:* <code>inventory.wait_for(name_regex: str = None, id: str = None, lore_regex: str = None, timeout: float = None, where: str = "all")</code>
+
+Waits until a matching item (see [`find`](#inventoryfind)) is in the inventory. Polls about every 50 ms.
+
+*Returns:*
+
+- the item dict, or `None` after `timeout` seconds (`None`: wait forever; negative raises `ValueError`)
+
+Since: v1.11
 
 ## Examples
 
