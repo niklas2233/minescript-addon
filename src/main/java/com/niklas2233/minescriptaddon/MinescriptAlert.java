@@ -29,7 +29,9 @@ public class MinescriptAlert {
 		var mc = Minecraft.getInstance();
 		mc.execute(() -> {
 			if (toast) run("toast", () -> SystemToast.add(toasts(mc), new SystemToast.SystemToastId(), Component.literal(title), Component.literal(text)));
-			if (chat && mc.player != null) run("chat line", () -> mc.player.sendSystemMessage(Component.literal(text)));
+			// Straight into the chat box like other client mods' lines, so chat.py records it as "client";
+			// player.sendSystemMessage would go through the receive events and be recorded as "game".
+			if (chat && mc.player != null) run("chat line", () -> Compat.chat(mc).addClientSystemMessage(Component.literal(text)));
 			if (flash && !mc.getWindow().isFocused()) run("window flash", () -> flash(mc.getWindow().handle()));
 			if (sound) run("sound", () -> {
 				SoundEvent event = soundEvent(mc, soundId);

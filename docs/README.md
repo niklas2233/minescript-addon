@@ -1,4 +1,4 @@
-## Minescript Addon v1.4.0 docs
+## Minescript Addon v1.4.1 docs
 
 Table of contents:
 
@@ -575,6 +575,10 @@ if inventory_full():
 ```
 
 Since: v1.4
+
+Update in v1.4.1:
+
+- `chat=True` lines are recorded with source `"client"` (they were recorded as `"game"`)
 
 ### inputs module
 

@@ -18,6 +18,16 @@ class VersionCompatTest {
 	}
 
 	@Test
+	void hudLookupsResolve() throws Exception {
+		Class<?> hud = Compat.hudClass();
+		assertEquals(net.minecraft.client.gui.components.ChatComponent.class, hud.getMethod("getChat").getReturnType());
+		assertEquals(net.minecraft.client.gui.components.PlayerTabOverlay.class, hud.getMethod("getTabList").getReturnType());
+		net.minecraft.client.gui.components.ChatComponent.class.getMethod("addClientSystemMessage", net.minecraft.network.chat.Component.class);
+		if (Compat.HUD_FIELD == null) net.minecraft.client.Options.class.getField("hideGui");
+		else hud.getMethod("isHidden");
+	}
+
+	@Test
 	void inputLookupsResolve() {
 		assertEquals(MethodType.methodType(boolean.class, com.mojang.blaze3d.platform.Window.class, int.class),
 				MinescriptInputs.IS_KEY_DOWN.type());

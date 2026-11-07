@@ -68,6 +68,16 @@ class MinescriptChatTest {
 	}
 
 	@Test
+	void alertChatLinesAreRecordedAsClient() {
+		// alert(chat=True) adds its line with ChatComponent.addClientSystemMessage, which reaches chatBox() through
+		// ChatComponentMixin without a receive event first: recorded as "client", not "game".
+		long seq = MinescriptChat.LOG.latestSeq();
+		assertTrue(!MinescriptChat.chatBox(Component.literal("Inventory full")), "not hidden");
+		var lines = MinescriptChat.LOG.since(seq, 0);
+		assertEquals(List.of("client:Inventory full"), lines.stream().map(l -> l.source() + ":" + l.text()).toList());
+	}
+
+	@Test
 	void sinceIsOneJsonArrayChatPyCanRead() {
 		long seq = MinescriptChat.LOG.latestSeq();
 		MinescriptChat.LOG.fromChatBox("hi", "§ahi", List.of(new ChatLog.Click("run_command", "/x")), "Chest", 5, 0);

@@ -151,7 +151,7 @@ alert.alert("Farm stopped", repeat=3, chat=True)    # ring 3 times 0.5 s apart, 
 
 `alert(text, sound=True, toast=True, flash=True, chat=False, repeat=1, title="Minescript", sound_id="minecraft:block.note_block.bell", volume=1.0, pitch=1.0)`
 
-- Everything is client-side: the sound plays only for you, the chat line is never sent.
+- Everything is client-side: the sound plays only for you, the chat line is never sent (`chat.py` records it with source `"client"`).
 - `flash` only flashes the taskbar while the game window isn't focused.
 - An unknown `sound_id` plays the bell and logs a warning. Nothing raises back into the script.
 
