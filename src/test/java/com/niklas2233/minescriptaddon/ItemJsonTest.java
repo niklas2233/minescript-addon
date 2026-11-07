@@ -2,6 +2,7 @@ package com.niklas2233.minescriptaddon;
 
 import com.google.gson.JsonParser;
 import net.minecraft.SharedConstants;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentInitializers;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -24,12 +25,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /** The item dict screens.py and inventory.py share, built from real items. */
 class ItemJsonTest {
 	@BeforeAll
-	static void bootstrap() {
+	static void bootstrap() throws ReflectiveOperationException {
 		SharedConstants.tryDetectVersion();
 		Bootstrap.bootStrap();
 		// 26.x binds items' default components (durability, name...) when registries load, not at bootstrap
-		BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(VanillaRegistries.createLookup())
-				.forEach(DataComponentInitializers.PendingComponents::apply);
+		BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(vanillaLookup()).forEach(DataComponentInitializers.PendingComponents::apply);
+	}
+
+	/** VanillaRegistries.createLookup() up to 26.2; 26.3 split it into world and reloadable lookups. */
+	private static HolderLookup.Provider vanillaLookup() throws ReflectiveOperationException {
+		try {
+			return (HolderLookup.Provider) VanillaRegistries.class.getMethod("createLookup").invoke(null);
+		} catch (NoSuchMethodException e) {
+			Object world = VanillaRegistries.class.getMethod("createWorldLookup").invoke(null);
+			return (HolderLookup.Provider) VanillaRegistries.class.getMethod("createReloadableLookup", HolderLookup.Provider.class).invoke(null, world);
+		}
 	}
 
 	@Test
