@@ -224,7 +224,7 @@ status.clear("farm")
 ```
 
 - Every script's line goes into one panel, sorted by name; a line disappears unless renewed within `ttl` (default 2 s), so a dead script's line goes away. `color=` works like `hud.text` (default white).
-- Hidden with the rest of the HUD (F1) and while the debug screen is open.
+- Hidden with the rest of the HUD (F1) and while the F3 debug screen is open (debug entries set to always on don't hide it).
 - `config/minescriptaddon-status.json` (created on first launch, re-read within a second after you save it): `{"enabled": true, "corner": "top_left", "x": 4, "y": 4, "opacity": 0.5}`. `corner` is `top_left`, `top_right`, `bottom_left` or `bottom_right`; `x`/`y` count inwards from it; `opacity` is the background's, 0–1.
 
 ## Screens and containers
@@ -268,4 +268,4 @@ Both report in chat whether each step worked, or the exception it raised.
 - `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py` and `screens.py` against a stubbed Java bridge.
 - `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.8.0 && git push origin v1.8.0`. GitHub Actions then builds `minescriptaddon-1.8.0.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.8.1 && git push origin v1.8.1`. GitHub Actions then builds `minescriptaddon-1.8.1.jar` and attaches it to a GitHub release.

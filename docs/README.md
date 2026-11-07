@@ -1,4 +1,4 @@
-## Minescript Addon v1.8.0 docs
+## Minescript Addon v1.8.1 docs
 
 Table of contents:
 
@@ -817,8 +817,8 @@ Since: v1.6
 A **shared status panel**: each script shows one line, `name: text`, in a single panel that lists
 every script's status, sorted by name. A line disappears unless renewed within its `ttl`, so a
 crashed or `\killjob`'d script's line goes away. The panel is hidden with the rest of the HUD (F1)
-and while the debug screen (F3) is open. Its position, background and on/off are in the
-[configuration](#status-panel).
+and while the F3 debug screen is open (debug entries set to always on don't hide it). Its position,
+background and on/off are in the [configuration](#status-panel).
 
 - [`status.clear`](#statusclear)
 - [`status.set`](#statusset)

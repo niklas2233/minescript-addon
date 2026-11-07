@@ -45,7 +45,7 @@ public class MinescriptStatus implements ClientModInitializer {
 	private static void draw(GuiGraphicsExtractor g) {
 		var mc = Minecraft.getInstance();
 		long now = System.nanoTime();
-		if (Compat.hudHidden(mc) || mc.getDebugOverlay().showDebugScreen()) return;
+		if (Compat.hudHidden(mc) || mc.debugEntries.isOverlayVisible()) return;
 		if (now - checkedAt > 1_000_000_000L) reloadIfChanged(now);
 		var c = config;
 		if (!c.enabled()) return;
