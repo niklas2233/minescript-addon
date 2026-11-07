@@ -102,10 +102,10 @@ public class MinescriptHud implements ClientModInitializer {
 	private static int ax(GuiGraphicsExtractor g, int x) { return x < 0 ? g.guiWidth() + x : x; }
 	private static int ay(GuiGraphicsExtractor g, int y) { return y < 0 ? g.guiHeight() + y : y; }
 
-	/** Copies the Python wrappers (hud.py, chat.py, keys.py, alert.py, inputs.py, ticks.py, screen_info.py) into the minescript folder, overwriting old copies. */
+	/** Copies the Python wrappers (hud.py, chat.py, keys.py, alert.py, inputs.py, ticks.py, screen_info.py, status.py) into the minescript folder, overwriting old copies. */
 	private static void installPythonModules() {
 		Path dir = FabricLoader.getInstance().getGameDir().resolve("minescript");
-		for (String name : new String[] {"hud.py", "chat.py", "keys.py", "alert.py", "inputs.py", "ticks.py", "screen_info.py"}) {
+		for (String name : new String[] {"hud.py", "chat.py", "keys.py", "alert.py", "inputs.py", "ticks.py", "screen_info.py", "status.py"}) {
 			try (InputStream in = MinescriptHud.class.getResourceAsStream("/" + name)) {
 				Files.createDirectories(dir);
 				Files.write(dir.resolve(name), in.readAllBytes());

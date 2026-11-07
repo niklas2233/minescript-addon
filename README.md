@@ -9,10 +9,11 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 - **`inputs`**: hold attack/use/movement keys that let go when the script crashes or is killed.
 - **`ticks`**: count client ticks and wait for the next one without polling.
 - **`screen_info`**: read the sidebar scoreboard, the tab list and the title on screen.
+- **`status`**: one shared HUD panel where every script shows a status line that goes away when the script dies.
 
 **📖 Full scripting docs: [docs/README.md](docs/README.md)**: every function, the config file, examples and troubleshooting.
 
-On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py` and `screen_info.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks` or `import screen_info`.
+On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py` and `status.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks`, `import screen_info` or `import status`.
 
 ## HUD
 
@@ -211,6 +212,20 @@ t = screen_info.title()             # {"title", "subtitle", "seconds_left"} or N
 - Each call is one snapshot read on the game thread; outside a world the values are empty.
 - Titles and subtitles are also recorded in `chat` with sources `"title"` and `"subtitle"`, so `chat.wait_for(..., source="title")` works. Re-sending the title that's still on screen isn't recorded again.
 
+## Status panel
+
+```python
+import status, time
+while farming():
+    status.set("farm", f"{crops} crops", ttl=2)    # one line "farm: 123 crops" in the shared panel
+    time.sleep(1)
+status.clear("farm")
+```
+
+- Every script's line goes into one panel, sorted by name; a line disappears unless renewed within `ttl` (default 2 s), so a dead script's line goes away. `color=` works like `hud.text` (default white).
+- Hidden with the rest of the HUD (F1) and while the debug screen is open.
+- `config/minescriptaddon-status.json` (created on first launch, re-read within a second after you save it): `{"enabled": true, "corner": "top_left", "x": 4, "y": 4, "opacity": 0.5}`. `corner` is `top_left`, `top_right`, `bottom_left` or `bottom_right`; `x`/`y` count inwards from it; `opacity` is the background's, 0–1.
+
 ## In-game checks
 
 Copy these from [`examples/`](examples) into `.minecraft/minescript/`. They aren't installed by the mod.
@@ -229,7 +244,7 @@ Both report in chat whether each step worked, or the exception it raised.
 
 ## Tests & releases
 
-- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py` and `screen_info.py` against a stubbed Java bridge.
+- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py` and `status.py` against a stubbed Java bridge.
 - `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.6.0 && git push origin v1.6.0`. GitHub Actions then builds `minescriptaddon-1.6.0.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.7.0 && git push origin v1.7.0`. GitHub Actions then builds `minescriptaddon-1.7.0.jar` and attaches it to a GitHub release.

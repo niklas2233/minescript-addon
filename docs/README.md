@@ -1,4 +1,4 @@
-## Minescript Addon v1.6.0 docs
+## Minescript Addon v1.7.0 docs
 
 Table of contents:
 
@@ -16,6 +16,7 @@ Table of contents:
     - [inputs module](#inputs-module)
     - [ticks module](#ticks-module)
     - [screen_info module](#screen_info-module)
+    - [status module](#status-module)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
@@ -31,7 +32,7 @@ Download `minescriptaddon-<version>.jar` from
 (within the **minecraft** folder). When upgrading, delete the old jar first. Very old builds were
 named `minescripthud-*.jar`.
 
-On every launch the mod writes seven Python modules into the **minescript** folder, so scripts can
+On every launch the mod writes eight Python modules into the **minescript** folder, so scripts can
 import them. Don't edit these files: they're overwritten on the next launch.
 
 | File | Module |
@@ -43,6 +44,7 @@ import them. Don't edit these files: they're overwritten on the next launch.
 | `minecraft/minescript/inputs.py` | [inputs module](#inputs-module) |
 | `minecraft/minescript/ticks.py` | [ticks module](#ticks-module) |
 | `minecraft/minescript/screen_info.py` | [screen_info module](#screen_info-module) |
+| `minecraft/minescript/status.py` | [status module](#status-module) |
 
 ## In-game usage
 
@@ -119,6 +121,31 @@ Notes:
   overwritten.
 - Bindings are saved by Minecraft in `options.txt` as `key.minescriptaddon.slot.N`, so changing a
   label keeps the binding.
+
+### Status panel
+
+The [status panel](#status-module) is configured in `minecraft/config/minescriptaddon-status.json`,
+which is created on first launch:
+
+```
+{
+  "enabled": true,
+  "corner": "top_left",
+  "x": 4,
+  "y": 4,
+  "opacity": 0.5
+}
+```
+
+| Field | Description |
+|---|---|
+| `enabled` | `false` hides the panel |
+| `corner` | `top_left`, `top_right`, `bottom_left` or `bottom_right` |
+| `x`, `y` | offset in GUI pixels, counted inwards from `corner` |
+| `opacity` | background opacity, 0–1 (`0.5` is the same translucent black as `hud.rect`'s default) |
+
+Changes apply within a second after the file is saved. A broken file logs a warning, the defaults
+are used, and the file is left alone so you can fix it.
 
 ## Python API
 
@@ -780,6 +807,46 @@ Gets the title currently on screen.
   or `None` when no title is shown; `seconds_left` includes the fade-out
 
 Since: v1.6
+
+### status module
+
+*Usage:* `import status  # from Python script`
+
+A **shared status panel**: each script shows one line, `name: text`, in a single panel that lists
+every script's status, sorted by name. A line disappears unless renewed within its `ttl`, so a
+crashed or `\killjob`'d script's line goes away. The panel is hidden with the rest of the HUD (F1)
+and while the debug screen (F3) is open. Its position, background and on/off are in the
+[configuration](#status-panel).
+
+- [`status.clear`](#statusclear)
+- [`status.set`](#statusset)
+
+#### status.set
+*Usage:* <code>status.set(name: str, text: str, ttl: float = 2.0, color: int = None)</code>
+
+Shows or updates the line `name: text` for `ttl` seconds. Call it again to renew it.
+
+*Args:*
+
+- `name`: non-empty; one line per name, so give each script its own
+- `text`: any value, shown with `str()`; `§` codes work
+- `ttl`: seconds, must be > 0
+- `color`: `0xRRGGBB` or `0xAARRGGBB` like [`hud.text`](#hudtext); `None` = white
+
+```
+while farming():
+  status.set("farm", f"{crops} crops", ttl=2)
+  time.sleep(1)
+```
+
+Since: v1.7
+
+#### status.clear
+*Usage:* <code>status.clear(name: str)</code>
+
+Removes the line `name` now.
+
+Since: v1.7
 
 ## Examples
 
