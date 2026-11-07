@@ -15,44 +15,54 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
  * Client entrypoint plus the static API Minescript scripts call through Java reflection
  * (see hud.py, which this mod copies into the minescript folder on startup).
  * Elements are keyed by id; drawing an existing id replaces it. Later ids draw on top.
+ * The overloads with a trailing ttl (seconds, 0 = never) make the element vanish unless redrawn in time.
  */
 public class MinescriptHud implements ClientModInitializer {
 	private static final Logger LOG = LoggerFactory.getLogger("minescripthud");
 
-	// ponytail: copy-on-write snapshot; scripts write from their own thread, render thread only reads.
-	private static volatile Map<String, Consumer<GuiGraphicsExtractor>> elements = Map.of();
+	private static final Elements<Consumer<GuiGraphicsExtractor>> elements = new Elements<>();
 
 	@Override
 	public void onInitializeClient() {
 		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("minescripthud", "elements"),
-				(g, delta) -> elements.values().forEach(e -> e.accept(g)));
+				(g, delta) -> elements.forEachLive(System.nanoTime(), e -> e.accept(g)));
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clear());
 		installPythonModule();
 	}
 
 	public static void text(String id, int x, int y, String text, int color, boolean shadow) {
-		put(id, g -> g.text(Minecraft.getInstance().font, text, ax(g, x), ay(g, y), color, shadow));
+		text(id, x, y, text, color, shadow, 0);
+	}
+
+	public static void text(String id, int x, int y, String text, int color, boolean shadow, double ttl) {
+		put(id, ttl, g -> g.text(Minecraft.getInstance().font, text, ax(g, x), ay(g, y), color, shadow));
 	}
 
 	public static void rect(String id, int x, int y, int w, int h, int color) {
-		put(id, g -> {
+		rect(id, x, y, w, h, color, 0);
+	}
+
+	public static void rect(String id, int x, int y, int w, int h, int color, double ttl) {
+		put(id, ttl, g -> {
 			int x0 = ax(g, x), y0 = ay(g, y);
 			g.fill(x0, y0, x0 + w, y0 + h, color);
 		});
 	}
 
 	public static void item(String id, int x, int y, String itemId, int count) {
+		item(id, x, y, itemId, count, 0);
+	}
+
+	public static void item(String id, int x, int y, String itemId, int count, double ttl) {
 		var item = BuiltInRegistries.ITEM.getValue(Identifier.parse(itemId));
 		var stack = new ItemStack(item, Math.max(1, count));
-		put(id, g -> {
+		put(id, ttl, g -> {
 			int x0 = ax(g, x), y0 = ay(g, y);
 			g.item(stack, x0, y0);
 			if (count > 1) g.itemDecorations(Minecraft.getInstance().font, stack, x0, y0);
@@ -71,20 +81,21 @@ public class MinescriptHud implements ClientModInitializer {
 		return Minecraft.getInstance().getWindow().getGuiScaledHeight();
 	}
 
-	public static synchronized void remove(String id) {
-		var copy = new LinkedHashMap<>(elements);
-		copy.remove(id);
-		elements = copy;
+	public static void remove(String id) {
+		elements.remove(id, System.nanoTime());
 	}
 
-	public static synchronized void clear() {
-		elements = Map.of();
+	public static void clear() {
+		elements.clear(null);
 	}
 
-	private static synchronized void put(String id, Consumer<GuiGraphicsExtractor> draw) {
-		var copy = new LinkedHashMap<>(elements);
-		copy.put(id, draw);
-		elements = copy;
+	/** Removes only ids starting with prefix, e.g. clear("farm.") for one script's elements. */
+	public static void clear(String prefix) {
+		elements.clear(prefix);
+	}
+
+	private static void put(String id, double ttl, Consumer<GuiGraphicsExtractor> draw) {
+		elements.put(id, draw, ttl, System.nanoTime());
 	}
 
 	// Negative coordinates anchor to the right/bottom edge, e.g. x = -10 is 10px from the right.

@@ -19,6 +19,14 @@ processResources {
 	}
 }
 
+// Plain-Java check of the element store (expiry, prefix clear); no test framework needed.
+def elementsCheck = tasks.register('elementsCheck', JavaExec) {
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.niklas2233.minescripthud.ElementsCheck'
+}
+tasks.named('check') { dependsOn elementsCheck }
+tasks.named('test') { failOnNoDiscoveredTests = false } // src/test holds the plain check, not JUnit tests
+
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 25
 }
