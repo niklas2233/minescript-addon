@@ -40,7 +40,11 @@ public class MinescriptChat implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		ClientReceiveMessageEvents.CHAT.register((message, signed, sender, type, timestamp) -> event("chat", message));
-		ClientReceiveMessageEvents.GAME.register((message, overlay) -> event(overlay ? "actionbar" : "game", message));
+		// Action bar text (overlay=true) is captured by the overlay mixins instead: /title ... actionbar and other
+		// mods' messages reach the action bar without this event, but every route ends in setOverlayMessage.
+		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+			if (!overlay) event("game", message);
+		});
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> LOG.clear());
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			openScreen = screen;
@@ -52,6 +56,7 @@ public class MinescriptChat implements ClientModInitializer {
 
 	// --- Bridge API for chat.py. Minescript passes Python ints as Java int and returns a Java long as an
 	// --- opaque handle, so seq crosses the bridge as int (internally long; 2^31 lines won't happen).
+	// --- Text is returned as ASCII-only JSON (see ascii()) and decoded with json.loads in Python.
 
 	public static int latestSeq() {
 		return (int) LOG.latestSeq();
@@ -63,11 +68,28 @@ public class MinescriptChat implements ClientModInitializer {
 	 * Python str in one call, where a List of String[] would need a bridge call per element.
 	 */
 	public static String since(int seq, int max) {
-		return GSON.toJson(LOG.since(seq, max));
+		return ascii(GSON.toJson(LOG.since(seq, max)));
 	}
 
+	/** The latest action bar text as an ASCII-only JSON string literal (see ascii()). */
 	public static String actionBar() {
-		return LOG.actionBar();
+		return ascii(GSON.toJson(LOG.actionBar()));
+	}
+
+	/**
+	 * Escapes every non-ASCII char of a JSON string as backslash-u-XXXX (surrogate pairs stay as two escapes,
+	 * which json.loads joins back). Needed because Minescript 5.0 writes strings to the script's stdin with
+	 * the JVM default charset (UTF-8) while Python on Windows reads a piped stdin with the locale code page
+	 * (e.g. cp1252) unless UTF-8 mode is on: "§" (C2 A7) arrived as "Â§". ASCII survives either way.
+	 */
+	static String ascii(String json) {
+		var sb = new StringBuilder(json.length());
+		for (int i = 0; i < json.length(); i++) {
+			char c = json.charAt(i);
+			if (c < 0x80) sb.append(c);
+			else sb.append(String.format("\\u%04x", (int) c));
+		}
+		return sb.toString();
 	}
 
 	public static void hide(String regex, double ttl) {
@@ -88,6 +110,11 @@ public class MinescriptChat implements ClientModInitializer {
 	private static void event(String source, Component message) {
 		LOG.fromEvent(source, plain(message), formatted(message), clicks(message), screen(),
 				System.currentTimeMillis(), System.nanoTime());
+	}
+
+	/** Called by the overlay mixins with every action bar message (from the server, /title, or any mod). */
+	public static void onOverlayMessage(Component message) {
+		LOG.fromActionBar(plain(message), formatted(message), clicks(message), screen(), System.currentTimeMillis());
 	}
 
 	/** Called by ChatComponentMixin; returns true to keep the line out of the chat box. */

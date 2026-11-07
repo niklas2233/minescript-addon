@@ -1,4 +1,5 @@
 """Tests keys.py against a fake MinescriptKeys bridge. Run: python -B -m unittest discover tests"""
+import json
 import pathlib
 import sys
 import time
@@ -37,7 +38,7 @@ class FakeKeys:
         self.calls.append(("release", slot))
 
     def binding(self, slot):
-        return {1: "R"}.get(slot, "")
+        return json.dumps({1: "R", 2: "Échap"}.get(slot, ""))  # ASCII-only JSON like the Java side
 
 
 class KeysTest(unittest.TestCase):
@@ -108,7 +109,8 @@ class KeysTest(unittest.TestCase):
     def test_count_and_binding(self):
         self.assertEqual(keys.count(), 3)
         self.assertEqual(keys.binding(1), "R")
-        self.assertEqual(keys.binding(2), "")
+        self.assertEqual(keys.binding(2), "Échap")
+        self.assertEqual(keys.binding(3), "")
 
 
 if __name__ == "__main__":

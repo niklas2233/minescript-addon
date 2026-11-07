@@ -10,7 +10,7 @@
   "entrypoints": {
     "client": ["com.niklas2233.minescriptaddon.MinescriptHud", "com.niklas2233.minescriptaddon.MinescriptChat", "com.niklas2233.minescriptaddon.MinescriptKeys"]
   },
-  "mixins": ["minescriptaddon.mixins.json"],
+  "mixins": ["minescriptaddon.mixins.json", "minescriptaddon.overlay.mixins.json"],
   "depends": {
     "fabricloader": ">=0.18.0",
     "minecraft": ">=26.1 <27",

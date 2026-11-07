@@ -39,7 +39,7 @@ class FakeChat:
             return json.dumps([l for l in self.lines if l["seq"] > seq][:max])
 
     def actionBar(self):
-        return "You may not rest now, there are monsters nearby"
+        return json.dumps("You may not rest now, there are monsters nearby")  # Java returns an ASCII-only JSON string literal
 
     def hide(self, regex, ttl):
         self.calls.append(("hide", regex, ttl))
@@ -133,6 +133,23 @@ class ChatTest(unittest.TestCase):
         self.assertFalse(listener.thread.is_alive())
         self.assertEqual(got, ["boom", "second"])
         self.assertEqual([str(e) for e in errors], ["boom"], "callback errors are printed, not fatal")
+
+    def test_non_ascii_round_trips_from_ascii_json(self):
+        # Exactly what MinescriptChat.since() returns: ASCII only, non-ASCII as \uXXXX (emoji = surrogate pair).
+        java_json = (r'[{"seq":1,"time":5,"source":"client","text":"Yellow caf\u00e9 \u2192 \ud83d\ude00",'
+                     r'"formatted":"\u00a7eYellow caf\u00e9 \u2192 \ud83d\ude00","clicks":[],'
+                     r'"screen":"Caf\u00e9 \u2192"}]')
+        self.assertTrue(java_json.isascii())
+        self.fake.since = lambda seq, max: java_json
+        line = chat.lines(0)[0]
+        self.assertEqual(line.formatted, "§eYellow café → 😀")
+        self.assertEqual(line.text, "Yellow café → 😀")
+        self.assertEqual(line.screen, "Café →")
+        self.assertNotIn("Â", line.formatted)
+
+    def test_action_bar_decodes_json(self):
+        self.fake.actionBar = lambda: r'"\u00a7aMining \u2192 +5"'
+        self.assertEqual(chat.action_bar(), "§aMining → +5")
 
     def test_action_bar_and_hide(self):
         self.assertEqual(chat.action_bar(), "You may not rest now, there are monsters nearby")

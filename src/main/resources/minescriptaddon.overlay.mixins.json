@@ -1,0 +1,6 @@
+{
+  "required": false,
+  "package": "com.niklas2233.minescriptaddon.mixin.overlay",
+  "compatibilityLevel": "JAVA_25",
+  "client": ["HudOverlayMixin", "GuiOverlayMixin"]
+}

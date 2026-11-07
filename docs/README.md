@@ -1,4 +1,4 @@
-## Minescript Addon v1.3 docs
+## Minescript Addon v1.3.1 docs
 
 Table of contents:
 
@@ -294,11 +294,13 @@ Sources:
 
 - `"chat"`: player chat
 - `"game"`: system messages from the server (command feedback, join/leave, plugin messages)
-- `"actionbar"`: the text above the hotbar
+- `"actionbar"`: the text above the hotbar, recorded only when it changes (see
+  [`chat.action_bar`](#chataction_bar))
 - `"client"`: lines added on the client: other mods' messages, client command output,
   `minescript.echo`
 
-In `formatted`, hex colors that aren't one of the 16 `§` colors are dropped.
+In `formatted`, hex colors that aren't one of the 16 `§` colors are dropped. Non-ASCII text (`§`,
+accents, arrows, emoji) arrives unchanged (fixed in v1.3.1: `§` used to arrive as `Â§` on Windows).
 
 Since: v1.2
 
@@ -311,6 +313,14 @@ Gets the plain text of the latest action bar message.
 
 - the text, or `""` if there hasn't been one since joining. The value remains after the message
   fades on screen.
+
+Every action bar message is captured, including `/title @s actionbar …` and messages from other
+mods. Servers often re-send the same action bar text every second or so. `action_bar()` always
+returns the latest, but an `"actionbar"` [`Line`](#chatline) is only recorded when the text changes.
+
+Update in v1.3.1:
+  Also captures `/title … actionbar` and other mods' action bar messages; repeated identical text is
+  recorded once.
 
 Since: v1.2
 

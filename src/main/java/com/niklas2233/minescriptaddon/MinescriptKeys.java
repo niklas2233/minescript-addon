@@ -1,5 +1,6 @@
 package com.niklas2233.minescriptaddon;
 
+import com.google.gson.Gson;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -25,6 +26,7 @@ import java.nio.file.attribute.FileTime;
  */
 public class MinescriptKeys implements ClientModInitializer {
 	private static final Logger LOG = LoggerFactory.getLogger("minescriptaddon");
+	private static final Gson GSON = new Gson();
 	private static final String NAME_PREFIX = "key.minescriptaddon.slot.";
 	private static final String CATEGORY_KEY = "key.category.minescriptaddon.keys";
 	private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("minescriptaddon-keys.json");
@@ -77,10 +79,10 @@ public class MinescriptKeys implements ClientModInitializer {
 		claims.release(slot);
 	}
 
-	/** The bound key's display name, e.g. "R", or "" if unbound. */
+	/** The bound key's display name (e.g. "R", or "" if unbound) as ASCII-only JSON, like MinescriptChat. */
 	public static String binding(int slot) {
 		KeyMapping m = mappings[claims.index(slot)];
-		return m.isUnbound() ? "" : m.getTranslatedKeyMessage().getString();
+		return MinescriptChat.ascii(GSON.toJson(m.isUnbound() ? "" : m.getTranslatedKeyMessage().getString()));
 	}
 
 	/** Display names for the Controls menu, supplied through ClientLanguageMixin. Null: not one of ours. */

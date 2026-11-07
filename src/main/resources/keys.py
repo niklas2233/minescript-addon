@@ -14,6 +14,7 @@ slot's command. A claim expires unless renewed within ttl seconds, so a crashed 
 swallowing the key; claim(), pressed() and wait() all renew it.
 """
 
+import json
 import time
 
 from java import JavaClass
@@ -77,4 +78,4 @@ def release(slot: int):
 def binding(slot: int) -> str:
     """The bound key's display name, e.g. "R", or "" if unbound."""
     _check(slot)
-    return _Keys.binding(slot)
+    return json.loads(_Keys.binding(slot))  # ASCII-only JSON, see chat.py

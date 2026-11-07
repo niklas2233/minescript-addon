@@ -26,17 +26,26 @@ final class ChatLog {
 	private final Elements<Pattern> hideRules = new Elements<>();
 	private long seq; // never reset, so a script's saved seq stays valid across clear()
 	private String actionBar = "";
+	private String lastActionBarFormatted; // null: none recorded since clear()
 
-	/** A line from Fabric's receive events: source "chat", "game" or "actionbar". */
+	/** A line from Fabric's receive events: source "chat" or "game". */
 	synchronized Line fromEvent(String source, String text, String formatted, List<Click> clicks, String screen,
 			long epochMs, long nanos) {
-		if (source.equals("actionbar")) {
-			actionBar = text;
-		} else {
-			pending.addLast(new Pending(formatted, nanos)); // its chat-box copy comes next via fromChatBox
-			if (pending.size() > 64) pending.removeFirst();
-		}
+		pending.addLast(new Pending(formatted, nanos)); // its chat-box copy comes next via fromChatBox
+		if (pending.size() > 64) pending.removeFirst();
 		return add(source, text, formatted, clicks, screen, epochMs);
+	}
+
+	/**
+	 * An action bar message (every route ends in the overlay mixin, so each arrives once). actionBar() is
+	 * always updated, but a line is only recorded when the text changes: servers re-send the same action bar
+	 * every second or so, which would otherwise fill the buffer. Returns the new line, or null if unchanged.
+	 */
+	synchronized Line fromActionBar(String text, String formatted, List<Click> clicks, String screen, long epochMs) {
+		actionBar = text;
+		if (formatted.equals(lastActionBarFormatted)) return null;
+		lastActionBarFormatted = formatted;
+		return add("actionbar", text, formatted, clicks, screen, epochMs);
 	}
 
 	/**
@@ -72,6 +81,7 @@ final class ChatLog {
 		lines.clear();
 		pending.clear();
 		actionBar = "";
+		lastActionBarFormatted = null;
 	}
 
 	/** Hides matching chat-box lines (Java regex, find() on the plain text). ttlSeconds <= 0: until unhide. */

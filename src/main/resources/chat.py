@@ -25,6 +25,8 @@ from dataclasses import dataclass
 from java import JavaClass
 
 _Chat = JavaClass("com.niklas2233.minescriptaddon.MinescriptChat")
+# Text comes back as ASCII-only JSON (non-ASCII as \uXXXX): Minescript's Java->Python pipe mangles
+# non-ASCII on Windows ("§" arrived as "Â§"), and json.loads restores it exactly.
 
 POLL_SECONDS = 0.05
 
@@ -113,7 +115,7 @@ def listen(callback, pattern: str = None, source=None, since: int = None) -> Lis
 
 def action_bar() -> str:
     """Plain text of the latest action bar message, or "" (none yet, or left the server)."""
-    return _Chat.actionBar()
+    return json.loads(_Chat.actionBar())
 
 
 def hide(pattern: str, ttl: float = None):

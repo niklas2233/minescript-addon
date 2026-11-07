@@ -6,6 +6,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -45,14 +46,34 @@ class ChatLogTest {
 		assertEquals(List.of("chat:hi", "client:hi", "chat:late", "client:late"), texts(log, 0));
 	}
 
+	private static ChatLog.Line actionBar(ChatLog log, String text) {
+		return log.fromActionBar(text, "§a" + text, List.of(), "", 0);
+	}
+
 	@Test
-	void actionBarIsRecordedButNeverExpectedInChatBox() {
+	void actionBarRecordsOnlyChangesButStaysCurrent() {
+		var log = new ChatLog();
+		String rest = "You may not rest now, there are monsters nearby";
+		assertEquals("actionbar", actionBar(log, rest).source());
+		assertNull(actionBar(log, rest), "same text again (server re-send): no new line");
+		assertNull(actionBar(log, rest));
+		assertEquals(rest, log.actionBar());
+		actionBar(log, "Now playing: C418 - cat");
+		assertEquals("Now playing: C418 - cat", log.actionBar(), "always the latest");
+		actionBar(log, rest);                       // changed back: recorded again
+		assertNull(log.fromActionBar(rest, "§a" + rest, List.of(), "", 0));
+		assertEquals(List.of("actionbar:" + rest, "actionbar:Now playing: C418 - cat", "actionbar:" + rest), texts(log, 0));
+		log.fromActionBar(rest, "§c" + rest, List.of(), "", 0);
+		assertEquals(4, log.since(0, 0).size(), "a formatting change counts as a change");
+	}
+
+	@Test
+	void actionBarIsNotExpectedInChatBox() {
 		var log = new ChatLog();
 		String bar = "You may not rest now, there are monsters nearby";
-		event(log, "actionbar", bar, T);
-		chatBox(log, bar, T);
+		actionBar(log, bar);
+		chatBox(log, bar, T);  // no pending marker from the action bar: the same text in chat is its own line
 		assertEquals(List.of("actionbar:" + bar, "client:" + bar), texts(log, 0));
-		assertEquals(bar, log.actionBar());
 	}
 
 	@Test
@@ -72,13 +93,14 @@ class ChatLogTest {
 	void clearKeepsSeqGoing() {
 		var log = new ChatLog();
 		chatBox(log, "a", T);
-		event(log, "actionbar", "bar", T);
+		actionBar(log, "bar");
 		event(log, "game", "pending", T);
 		log.clear();
 		assertEquals(List.of(), log.since(0, 0));
 		assertEquals("", log.actionBar());
 		chatBox(log, "pending", T);      // pending dedup was cleared too
 		assertEquals(List.of(new ChatLog.Line(4, 0, "client", "pending", "§apending", List.of(), "")), log.since(3, 0));
+		assertEquals(5, actionBar(log, "bar").seq(), "action bar dedup was cleared too");
 	}
 
 	@Test
