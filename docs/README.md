@@ -1,4 +1,4 @@
-## Minescript Addon v1.9.0 docs
+## Minescript Addon v1.10.0 docs
 
 Table of contents:
 
@@ -19,6 +19,7 @@ Table of contents:
     - [status module](#status-module)
     - [screens module](#screens-module)
     - [settings module](#settings-module)
+    - [world_events module](#world_events-module)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
@@ -34,7 +35,7 @@ Download `minescriptaddon-<version>.jar` from
 (within the **minecraft** folder). When upgrading, delete the old jar first. Very old builds were
 named `minescripthud-*.jar`.
 
-On every launch the mod writes ten Python modules into the **minescript** folder, so scripts can
+On every launch the mod writes eleven Python modules into the **minescript** folder, so scripts can
 import them. Don't edit these files: they're overwritten on the next launch.
 
 | File | Module |
@@ -49,6 +50,7 @@ import them. Don't edit these files: they're overwritten on the next launch.
 | `minecraft/minescript/status.py` | [status module](#status-module) |
 | `minecraft/minescript/screens.py` | [screens module](#screens-module) |
 | `minecraft/minescript/settings.py` | [settings module](#settings-module) |
+| `minecraft/minescript/world_events.py` | [world_events module](#world_events-module) |
 
 ## In-game usage
 
@@ -1022,6 +1024,126 @@ disables **Save**. Saving writes the file atomically; a running script sees the 
 be edited. List items can't contain commas in the editor.
 
 Since: v1.9
+
+### world_events module
+
+*Usage:* `import world_events  # from Python script`
+
+The **sounds** the client plays (from the server, and the client's own: UI clicks, footsteps, music) and the
+**particles** spawned by server packets. The mod keeps the last 500 of each; they're cleared when you leave a
+server, but seq numbers keep counting. Use `since` and `latest_*_seq()` like [`chat`](#chat-module)'s.
+Patterns are Python regexes searched in the id. `near` is an `(x, y, z)` tuple and `radius` is in blocks; give
+both or neither (`ValueError` otherwise). The mod only watches: it never changes or cancels a sound or particle.
+
+- [`world_events.latest_particle_seq`](#world_eventslatest_particle_seq)
+- [`world_events.latest_sound_seq`](#world_eventslatest_sound_seq)
+- [`world_events.listen_particles`](#world_eventslisten_particles)
+- [`world_events.listen_sounds`](#world_eventslisten_sounds)
+- [`world_events.particles`](#world_eventsparticles)
+- [`world_events.sounds`](#world_eventssounds)
+- [`world_events.wait_particle`](#world_eventswait_particle)
+- [`world_events.wait_sound`](#world_eventswait_sound)
+- [`world_events.Sound`](#world_eventssound)
+- [`world_events.Particle`](#world_eventsparticle)
+
+```
+seq = world_events.latest_sound_seq()   # e.g. right after casting a fishing rod
+if world_events.wait_sound(r"entity\.fishing_bobber\.splash", timeout=30, since=seq,
+                           near=minescript.player_position(), radius=24):
+  minescript.echo("bite!")
+```
+
+#### world_events.latest_sound_seq
+*Usage:* <code>world_events.latest_sound_seq() -> int</code>
+
+Seq of the newest recorded sound. Grab it before doing something, then pass it as `since=` so a fast sound
+isn't missed.
+
+Since: v1.10
+
+#### world_events.latest_particle_seq
+*Usage:* <code>world_events.latest_particle_seq() -> int</code>
+
+Seq of the newest recorded particle packet.
+
+Since: v1.10
+
+#### world_events.sounds
+*Usage:* <code>world_events.sounds(since: int = None) -> list</code>
+
+Recorded [`Sound`](#world_eventssound)s after seq `since` (`None`: all of the last 500), oldest first.
+
+Since: v1.10
+
+#### world_events.particles
+*Usage:* <code>world_events.particles(since: int = None) -> list</code>
+
+Recorded [`Particle`](#world_eventsparticle)s after seq `since` (`None`: all of the last 500), oldest first.
+
+Since: v1.10
+
+#### world_events.wait_sound
+*Usage:* <code>world_events.wait_sound(id_regex: str, timeout: float = None, near=None, radius: float = None, since: int = None)</code>
+
+Waits for the first sound after `since` (default: now) whose id matches `id_regex`, within `radius` blocks of
+`near` if given. Sounds positioned relative to you (UI sounds, music) are never near anything.
+
+*Returns:*
+
+- the [`Sound`](#world_eventssound), or `None` after `timeout` seconds (`None`: wait forever)
+
+Since: v1.10
+
+#### world_events.wait_particle
+*Usage:* <code>world_events.wait_particle(id_regex: str, timeout: float = None, near=None, radius: float = None, since: int = None)</code>
+
+Like [`wait_sound`](#world_eventswait_sound), for particle packets.
+
+*Returns:*
+
+- the [`Particle`](#world_eventsparticle), or `None` after `timeout` seconds
+
+Since: v1.10
+
+#### world_events.listen_sounds
+*Usage:* <code>world_events.listen_sounds(callback, id_regex: str = None)</code>
+
+Calls `callback(sound)` on a background thread for every new sound whose id matches `id_regex` (`None`: all).
+Exceptions in the callback are printed and don't stop it.
+
+*Returns:*
+
+- a listener; call `.stop()` to end it
+
+Since: v1.10
+
+#### world_events.listen_particles
+*Usage:* <code>world_events.listen_particles(callback, id_regex: str = None)</code>
+
+Like [`listen_sounds`](#world_eventslisten_sounds), for particle packets.
+
+Since: v1.10
+
+#### world_events.Sound
+A recorded sound:
+
+| Field | |
+|---|---|
+| `seq` | int, never resets |
+| `time` | epoch milliseconds |
+| `id` | e.g. `"minecraft:entity.experience_orb.pickup"` |
+| `category` | `"master"`, `"music"`, `"record"`, `"weather"`, `"block"`, `"hostile"`, `"neutral"`, `"player"`, `"ambient"`, … |
+| `x`, `y`, `z` | where it plays |
+| `volume`, `pitch` | as asked for, before the game's volume settings (muted sounds are recorded too) |
+| `relative` | `True` for sounds positioned relative to you (UI sounds, music): `x`/`y`/`z` are offsets |
+
+Since: v1.10
+
+#### world_events.Particle
+A recorded particle packet: `seq`, `time`, `id` (e.g. `"minecraft:flame"`), `x`, `y`, `z` and `count` (particles
+in the packet; 0 means one).
+
+Since: v1.10
 
 ## Examples
 

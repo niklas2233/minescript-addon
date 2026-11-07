@@ -2,7 +2,7 @@
   "required": true,
   "package": "com.niklas2233.minescriptaddon.mixin",
   "compatibilityLevel": "JAVA_25",
-  "client": ["ChatComponentMixin", "ClientLanguageMixin"],
+  "client": ["ChatComponentMixin", "ClientLanguageMixin", "SoundManagerMixin", "SoundInstanceAccessor", "ParticlePacketMixin"],
   "injectors": {
     "defaultRequire": 1
   }

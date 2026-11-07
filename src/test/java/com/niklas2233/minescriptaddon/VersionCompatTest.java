@@ -30,6 +30,11 @@ class VersionCompatTest {
 	}
 
 	@Test
+	void particlePacketGettersResolve() {
+		assertDoesNotThrow(() -> MinescriptWorldEvents.COUNT); // getX()... up to 26.2, x()... (record) in 26.3
+	}
+
+	@Test
 	void inputLookupsResolve() {
 		assertEquals(MethodType.methodType(boolean.class, com.mojang.blaze3d.platform.Window.class, int.class),
 				MinescriptInputs.IS_KEY_DOWN.type());

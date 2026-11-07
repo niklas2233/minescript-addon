@@ -12,10 +12,11 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 - **`status`**: one shared HUD panel where every script shows a status line that goes away when the script dies.
 - **`screens`**: wait for a container screen, read its items (name, lore, custom data) and click slots.
 - **`settings`**: per-script settings in a JSON file, with an in-game editor (`/msettings <script>`).
+- **`world_events`**: the sounds the client plays and the particles the server sends: wait for one, list them or listen.
 
 **📖 Full scripting docs: [docs/README.md](docs/README.md)**: every function, the config file, examples and troubleshooting.
 
-On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py` and `settings.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks`, `import screen_info`, `import status`, `import screens` or `import settings`.
+On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py`, `settings.py` and `world_events.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks`, `import screen_info`, `import status`, `import screens`, `import settings` or `import world_events`.
 
 ## HUD
 
@@ -265,6 +266,29 @@ if s.changed():        # someone edited the file, e.g. with /msettings farm
 - A broken file gives the defaults with a warning and is left as is.
 - **`/msettings <script>`** opens an in-game editor (tab-completes): toggles, text and number fields, comma-separated lists. Invalid fields turn red and disable Save.
 
+## Sounds and particles
+
+```python
+import world_events, minescript
+seq = world_events.latest_sound_seq()                 # grab before acting, so a fast sound isn't missed
+s = world_events.wait_sound(r"note_block\.bell", timeout=5, since=seq,
+                            near=minescript.player_position(), radius=16)
+p = world_events.wait_particle(r"^minecraft:flame$", timeout=5)
+l = world_events.listen_sounds(lambda s: print(s.id, s.x, s.y, s.z), id_regex=r"experience_orb")
+l.stop()
+```
+
+| Function | |
+|---|---|
+| `latest_sound_seq()`, `latest_particle_seq()` | newest seq, for `since=` |
+| `sounds(since=None)`, `particles(since=None)` | recorded events after `since` (`None`: all of the last 500) |
+| `wait_sound(id_regex, timeout=None, near=None, radius=None, since=None)` | first matching sound after `since` (default now), or `None` after `timeout` |
+| `wait_particle(...)` | the same for particles |
+| `listen_sounds(callback, id_regex=None)`, `listen_particles(...)` | callback per new matching event; `.stop()` |
+
+- Sounds: every sound the client plays, from the server and its own (UI, footsteps, music): `seq`, `time`, `id`, `category`, `x`/`y`/`z`, `volume`, `pitch`, `relative`. Particles: those from server packets: `seq`, `time`, `id`, `x`/`y`/`z`, `count`.
+- Last 500 of each, cleared when you leave a server; seq numbers never reset. `near=(x, y, z)` and `radius` (blocks) go together. Nothing the game plays or shows is changed.
+
 ## In-game checks
 
 Copy these from [`examples/`](examples) into `.minecraft/minescript/`. They aren't installed by the mod.
@@ -283,7 +307,7 @@ Both report in chat whether each step worked, or the exception it raised.
 
 ## Tests & releases
 
-- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py` and `settings.py` against a stubbed Java bridge.
+- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py`, `screen_info.py`, `status.py`, `screens.py`, `settings.py` and `world_events.py` against a stubbed Java bridge.
 - `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.9.0 && git push origin v1.9.0`. GitHub Actions then builds `minescriptaddon-1.9.0.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.10.0 && git push origin v1.10.0`. GitHub Actions then builds `minescriptaddon-1.10.0.jar` and attaches it to a GitHub release.

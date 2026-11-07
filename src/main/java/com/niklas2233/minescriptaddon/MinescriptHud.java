@@ -105,7 +105,7 @@ public class MinescriptHud implements ClientModInitializer {
 	/** Copies the Python wrappers (hud.py, chat.py, keys.py, alert.py, inputs.py, ticks.py, screen_info.py, status.py, screens.py) into the minescript folder, overwriting old copies. */
 	private static void installPythonModules() {
 		Path dir = FabricLoader.getInstance().getGameDir().resolve("minescript");
-		for (String name : new String[] {"hud.py", "chat.py", "keys.py", "alert.py", "inputs.py", "ticks.py", "screen_info.py", "status.py", "screens.py", "settings.py"}) {
+		for (String name : new String[] {"hud.py", "chat.py", "keys.py", "alert.py", "inputs.py", "ticks.py", "screen_info.py", "status.py", "screens.py", "settings.py", "world_events.py"}) {
 			try (InputStream in = MinescriptHud.class.getResourceAsStream("/" + name)) {
 				Files.createDirectories(dir);
 				Files.write(dir.resolve(name), in.readAllBytes());
