@@ -1,6 +1,6 @@
 """In-game check for Minescript HUD. Not installed by the mod: copy to .minecraft/minescript/ and run \\hud_demo.
 
-Draws a small "demo." panel for ~10 s (redrawn with ttl=2, so it also vanishes ~2 s after a \\killjob),
+Draws a small "demo." panel for ~10 s (every element redrawn with ttl=2, so all of it vanishes ~2 s after a \\killjob),
 then clears it. Each kind of Java call is reported in chat once: OK, or the exception it raised.
 """
 import time
@@ -29,16 +29,19 @@ def call(name, fn, *args, **kwargs):
 
 call("screen_size()", hud.screen_size)
 call("text_width()", hud.text_width, "Minescript HUD")
+# Old no-ttl Java signature: called once to check it works. The loop redraws the same id with ttl=2,
+# so it expires like the rest after a \killjob (which skips the finally block).
 call("old 6-arg text overload", hud._Hud.text, "demo.old", 8, 46, "old overload", -1, True)
 
 end = time.time() + 10
 try:
     while time.time() < end:
         left = end - time.time()
-        call("rect(ttl=2)", hud.rect, "demo.bg", 4, 4, 130, 40, 0x000000, alpha=160, ttl=2)
+        call("rect(ttl=2)", hud.rect, "demo.bg", 4, 4, 130, 56, 0x000000, alpha=160, ttl=2)
         call("text(ttl=2)", hud.text, "demo.title", 8, 8, "§bMinescript HUD demo", ttl=2)
         call("text(alpha=255)", hud.text, "demo.timer", 8, 20, f"closing in {left:4.1f}s", 0xFFFF55, alpha=255, ttl=2)
         call("text(alpha=0) invisible", hud.text, "demo.hidden", 8, 32, "you should NOT see this", alpha=0, ttl=2)
+        hud.text("demo.old", 8, 46, "old overload OK", 0xAAAAAA, ttl=2)
         call("item(ttl=2)", hud.item, "demo.item", 112, 16, "minecraft:diamond", count=3, ttl=2)
         time.sleep(0.25)
 finally:
