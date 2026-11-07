@@ -1,6 +1,7 @@
 {
   "required": false,
   "package": "com.niklas2233.minescriptaddon.mixin.overlay",
+  "plugin": "com.niklas2233.minescriptaddon.MixinVersionPlugin",
   "compatibilityLevel": "JAVA_25",
-  "client": ["HudOverlayMixin", "GuiOverlayMixin"]
+  "client": ["HudOverlayMixin", "GuiOverlayMixin", "HudTitleMixin", "GuiTitleMixin", "TabListAccessor"]
 }

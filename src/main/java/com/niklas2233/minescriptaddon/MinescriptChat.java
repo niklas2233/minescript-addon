@@ -117,6 +117,17 @@ public class MinescriptChat implements ClientModInitializer {
 		LOG.fromActionBar(plain(message), formatted(message), clicks(message), screen(), System.currentTimeMillis());
 	}
 
+	/**
+	 * Called by the title mixins before a title/subtitle is set. current is the one being replaced and showing
+	 * whether a title is on screen: re-sending the text that's still shown isn't recorded again.
+	 */
+	public static void onTitle(String source, Component message, Component current, boolean showing) {
+		if (message == null) return;
+		String formatted = formatted(message);
+		boolean repeat = showing && current != null && formatted(current).equals(formatted);
+		LOG.fromTitle(source, plain(message), formatted, clicks(message), screen(), System.currentTimeMillis(), repeat);
+	}
+
 	/** Called by ChatComponentMixin; returns true to keep the line out of the chat box. */
 	public static boolean chatBox(Component message) {
 		return LOG.fromChatBox(plain(message), formatted(message), clicks(message), screen(),

@@ -8,10 +8,11 @@ Fabric client mod for Minecraft 26.1–26.x that gives [Minescript](https://mine
 - **`alert`**: get the player's attention: a sound only you hear, a toast, a taskbar flash.
 - **`inputs`**: hold attack/use/movement keys that let go when the script crashes or is killed.
 - **`ticks`**: count client ticks and wait for the next one without polling.
+- **`screen_info`**: read the sidebar scoreboard, the tab list and the title on screen.
 
 **📖 Full scripting docs: [docs/README.md](docs/README.md)**: every function, the config file, examples and troubleshooting.
 
-On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py` and `ticks.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs` or `import ticks`.
+On launch the mod writes `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py` and `screen_info.py` into your `.minecraft/minescript/` folder (overwriting older copies), so scripts can just `import hud`, `import chat`, `import keys`, `import alert`, `import inputs`, `import ticks` or `import screen_info`.
 
 ## HUD
 
@@ -81,7 +82,7 @@ Each line is a `chat.Line` with:
 |---|---|
 | `seq` | increasing number, never reused |
 | `time` | epoch milliseconds |
-| `source` | `"chat"` (player chat), `"game"` (server system message), `"actionbar"`, or `"client"` (added on the client, e.g. by another mod or a client command) |
+| `source` | `"chat"` (player chat), `"game"` (server system message), `"actionbar"`, `"title"`/`"subtitle"`, or `"client"` (added on the client, e.g. by another mod or a client command) |
 | `text` / `formatted` | plain text / text with `§` codes (hex colors that aren't one of the 16 legacy colors are dropped) |
 | `clicks` | `(action, value)` pairs for `run_command`, `suggest_command` and `open_url`, in text order |
 | `screen` | title of the screen that was open when the line arrived (e.g. a chest menu), `""` if none |
@@ -197,6 +198,19 @@ print(ticks.count() - start, "ticks in", ticks.time_since(start), "s")
 
 - `wait` doesn't poll: the call blocks in Java (on the script's own thread, at most 0.1 s per call) and returns within about a millisecond of the tick, plus Minescript's call overhead.
 
+## Sidebar, tab list and titles
+
+```python
+import screen_info
+board = screen_info.sidebar()       # {"title", "lines": [...] top to bottom, "scores", + formatted_ variants}
+tab = screen_info.tab_list()        # {"header", "footer", "players": [{"name", "display", "ping", "gamemode"}]}
+t = screen_info.title()             # {"title", "subtitle", "seconds_left"} or None
+```
+
+- Every text has a plain and a `formatted_` (`§` codes) variant, like `chat`'s `text`/`formatted`.
+- Each call is one snapshot read on the game thread; outside a world the values are empty.
+- Titles and subtitles are also recorded in `chat` with sources `"title"` and `"subtitle"`, so `chat.wait_for(..., source="title")` works. Re-sending the title that's still on screen isn't recorded again.
+
 ## In-game checks
 
 Copy these from [`examples/`](examples) into `.minecraft/minescript/`. They aren't installed by the mod.
@@ -215,7 +229,7 @@ Both report in chat whether each step worked, or the exception it raised.
 
 ## Tests & releases
 
-- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py` and `ticks.py` against a stubbed Java bridge.
+- `python -B -m unittest discover tests` tests `hud.py`, `chat.py`, `keys.py`, `alert.py`, `inputs.py`, `ticks.py` and `screen_info.py` against a stubbed Java bridge.
 - `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
-- To release, push a tag such as `git tag v1.5.0 && git push origin v1.5.0`. GitHub Actions then builds `minescriptaddon-1.5.0.jar` and attaches it to a GitHub release.
+- To release, push a tag such as `git tag v1.6.0 && git push origin v1.6.0`. GitHub Actions then builds `minescriptaddon-1.6.0.jar` and attaches it to a GitHub release.

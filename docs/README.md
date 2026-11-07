@@ -1,4 +1,4 @@
-## Minescript Addon v1.5.0 docs
+## Minescript Addon v1.6.0 docs
 
 Table of contents:
 
@@ -15,6 +15,7 @@ Table of contents:
     - [alert module](#alert-module)
     - [inputs module](#inputs-module)
     - [ticks module](#ticks-module)
+    - [screen_info module](#screen_info-module)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
@@ -30,7 +31,7 @@ Download `minescriptaddon-<version>.jar` from
 (within the **minecraft** folder). When upgrading, delete the old jar first. Very old builds were
 named `minescripthud-*.jar`.
 
-On every launch the mod writes six Python modules into the **minescript** folder, so scripts can
+On every launch the mod writes seven Python modules into the **minescript** folder, so scripts can
 import them. Don't edit these files: they're overwritten on the next launch.
 
 | File | Module |
@@ -41,6 +42,7 @@ import them. Don't edit these files: they're overwritten on the next launch.
 | `minecraft/minescript/alert.py` | [alert module](#alert-module) |
 | `minecraft/minescript/inputs.py` | [inputs module](#inputs-module) |
 | `minecraft/minescript/ticks.py` | [ticks module](#ticks-module) |
+| `minecraft/minescript/screen_info.py` | [screen_info module](#screen_info-module) |
 
 ## In-game usage
 
@@ -289,7 +291,7 @@ counting. A line that reaches the client by two paths is recorded once.
 ```
   seq: int          # increasing number, never reused
   time: int         # arrival time, epoch milliseconds
-  source: str       # "chat" | "game" | "actionbar" | "client"
+  source: str       # "chat" | "game" | "actionbar" | "title" | "subtitle" | "client"
   text: str         # plain text, formatting removed
   formatted: str    # text with § codes
   clicks: tuple     # ((action, value), ...) for run_command / suggest_command / open_url
@@ -302,6 +304,8 @@ Sources:
 - `"game"`: system messages from the server (command feedback, join/leave, plugin messages)
 - `"actionbar"`: the text above the hotbar, recorded only when it changes (see
   [`chat.action_bar`](#chataction_bar))
+- `"title"` / `"subtitle"`: titles (`/title`); re-sending the one still on screen isn't recorded
+  again (since v1.6, see [`screen_info.title`](#screen_infotitle))
 - `"client"`: lines added on the client: other mods' messages, client command output,
   `minescript.echo`
 
@@ -711,6 +715,71 @@ minescript.echo(f"{ticks.count() - start} ticks, {ticks.time_since(start):.2f} s
 ```
 
 Since: v1.5
+
+### screen_info module
+
+*Usage:* `import screen_info  # from Python script`
+
+Reads the **sidebar scoreboard**, the **tab list** and the **title** on screen. Each call reads one
+snapshot on the game thread. Outside a world, the values are empty (`title()` returns `None`).
+
+Every text comes twice, like [`chat.Line`](#chatline)'s `text`/`formatted`: plain, and with a
+`formatted_` prefix with `§` codes (hex colors that aren't one of the 16 `§` colors are dropped).
+
+Titles and subtitles are also recorded in the [chat module](#chat-module) with sources `"title"` and
+`"subtitle"`, so [`chat.wait_for`](#chatwait_for) works for them.
+
+- [`screen_info.sidebar`](#screen_infosidebar)
+- [`screen_info.tab_list`](#screen_infotab_list)
+- [`screen_info.title`](#screen_infotitle)
+
+#### screen_info.sidebar
+*Usage:* <code>screen_info.sidebar() -> dict</code>
+
+Gets the sidebar scoreboard as displayed.
+
+*Returns:*
+
+- `{"title": str, "formatted_title": str, "lines": [str, ...], "formatted_lines": [str, ...], "scores": [str, ...]}`
+- `lines` top to bottom (at most 15, like the game), with team prefixes and suffixes; `scores` are
+  the numbers on the right as shown (`""` when the server hides them)
+- empty title and lists when no sidebar is shown
+
+Only the main sidebar is read, not the per-team-color sidebars.
+
+```
+board = screen_info.sidebar()
+coins = next((l for l in board["lines"] if l.startswith("Coins: ")), None)
+```
+
+Since: v1.6
+
+#### screen_info.tab_list
+*Usage:* <code>screen_info.tab_list() -> dict</code>
+
+Gets the tab list (player list), whether or not it's open.
+
+*Returns:*
+
+- `{"header": str, "formatted_header": str, "footer": str, "formatted_footer": str, "players": [...]}`
+- each player: `{"name": str, "display": str, "formatted_display": str, "ping": int, "gamemode": str}`;
+  `name` is the account name, `display` the name as shown in the list, `ping` in ms, `gamemode`
+  e.g. `"survival"`
+- players in the game's own tab-list order, at most 80 (like the game)
+
+Since: v1.6
+
+#### screen_info.title
+*Usage:* <code>screen_info.title()</code>
+
+Gets the title currently on screen.
+
+*Returns:*
+
+- `{"title": str, "formatted_title": str, "subtitle": str, "formatted_subtitle": str, "seconds_left": float}`,
+  or `None` when no title is shown; `seconds_left` includes the fade-out
+
+Since: v1.6
 
 ## Examples
 

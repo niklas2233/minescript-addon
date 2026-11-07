@@ -49,6 +49,15 @@ final class ChatLog {
 	}
 
 	/**
+	 * A title or subtitle (source "title"/"subtitle"). repeat: the same text is still on screen (servers re-send
+	 * titles to keep them up), so no new line, like the action bar. Returns the new line, or null for a repeat.
+	 */
+	synchronized Line fromTitle(String source, String text, String formatted, List<Click> clicks, String screen,
+			long epochMs, boolean repeat) {
+		return repeat ? null : add(source, text, formatted, clicks, screen, epochMs);
+	}
+
+	/**
 	 * A line about to be added to the chat box. Recorded as "client" unless it is the chat-box copy of an
 	 * event line already recorded. Returns true if a hide rule says it should not be shown.
 	 */

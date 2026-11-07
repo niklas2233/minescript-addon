@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Every action bar message ends in setOverlayMessage(Component, boolean): the /title actionbar packet,
  * system messages with overlay=true, and other mods. 26.2+ has it on Hud; 26.1.x on Gui (GuiOverlayMixin).
- * String targets plus require = 0, in the non-required minescriptaddon.overlay.mixins.json, let the jar run
- * on every 26.x: the variant whose target doesn't exist is skipped.
+ * String targets, and MixinVersionPlugin applies only the variant for the running version (the config is
+ * also non-required, so a mismatch only logs a warning).
  */
 @Mixin(targets = "net.minecraft.client.gui.Hud")
 abstract class HudOverlayMixin {
