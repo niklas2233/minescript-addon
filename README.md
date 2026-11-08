@@ -338,3 +338,7 @@ Both report in chat whether each step worked, or the exception it raised.
 - `./gradlew test` runs the JUnit tests: HUD element expiry and prefix removal; the chat ring buffer, dedup, hide rules and Component → text/§ codes/click actions/JSON; key config parsing (defaults, count changes, broken files) and key claims/expiry; input holds (renewal, expiry, owner-scoped release); and that the lookups that differ between 26.x versions resolve.
 - CI runs both and builds against every supported 26.x version.
 - To release, push a tag such as `git tag v1.0.0 && git push origin v1.0.0`. GitHub Actions then builds `minescriptaddon-1.0.0+mc26.x.jar`, attaches it to a GitHub release and publishes it to [Modrinth](https://modrinth.com/project/minescript-addon) (needs the `MODRINTH_TOKEN` repo secret).
+
+## License
+
+[GPL-3.0](LICENSE), like Minescript.
