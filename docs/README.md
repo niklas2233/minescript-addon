@@ -1,4 +1,4 @@
-## Minescript Addon v1.11.0 docs
+## Minescript Addon v1.0.0 docs
 
 Table of contents:
 
@@ -206,11 +206,6 @@ Removes HUD elements.
 - `prefix`: remove only ids starting with this string; `None` or `""` removes **all** elements,
   including other scripts' elements
 
-Update in v1.1:
-  Added `prefix`.
-
-Since: v1.0
-
 #### hud.item
 *Usage:* <code>hud.item(id: str, x: int, y: int, item_id: str, count: int = 1, ttl: float = None)</code>
 
@@ -224,11 +219,6 @@ Draws a 16×16 item icon with its top-left corner at (`x`, `y`).
   malformed id raises an error
 - `count`: stack size; if more than 1, it's drawn on the icon
 - `ttl`: seconds until the element disappears unless redrawn; `None`/`0` = never
-
-Update in v1.1:
-  Added `ttl`.
-
-Since: v1.0
 
 #### hud.rect
 *Usage:* <code>hud.rect(id: str, x: int, y: int, width: int, height: int, color: int = 0x80000000, alpha: int = None, ttl: float = None)</code>
@@ -245,17 +235,10 @@ background panel.
 - `alpha`: 0–255, overrides the color's alpha (clamped)
 - `ttl`: seconds until the element disappears unless redrawn; `None`/`0` = never
 
-Update in v1.1:
-  Added `alpha` and `ttl`.
-
-Since: v1.0
-
 #### hud.remove
 *Usage:* <code>hud.remove(id: str)</code>
 
 Removes one element. Unknown ids are ignored.
-
-Since: v1.0
 
 #### hud.screen_size
 *Usage:* <code>hud.screen_size() -> Tuple[int, int]</code>
@@ -265,8 +248,6 @@ Gets the HUD size, in the same GUI-scaled pixels as `x`/`y`.
 *Returns:*
 
 - `(width, height)`, which changes with the window size and the GUI Scale option
-
-Since: v1.0
 
 #### hud.text
 *Usage:* <code>hud.text(id: str, x: int, y: int, text: str, color: int = 0xFFFFFF, shadow: bool = True, alpha: int = None, ttl: float = None)</code>
@@ -283,18 +264,11 @@ Draws one line of text with its top-left corner at (`x`, `y`).
 - `alpha`: 0–255, overrides the color's alpha (clamped)
 - `ttl`: seconds until the element disappears unless redrawn; `None`/`0` = never
 
-Update in v1.1:
-  Added `alpha` and `ttl`.
-
-Since: v1.0
-
 #### hud.text_width
 *Usage:* <code>hud.text_width(text: str) -> int</code>
 
 Gets the width of `text` in GUI pixels with the current font. `§` codes take no space. Useful for
 right-aligning text, e.g. `x = -(hud.text_width(s) + 4)`.
-
-Since: v1.0
 
 ### chat module
 
@@ -340,14 +314,12 @@ Sources:
 - `"actionbar"`: the text above the hotbar, recorded only when it changes (see
   [`chat.action_bar`](#chataction_bar))
 - `"title"` / `"subtitle"`: titles (`/title`); re-sending the one still on screen isn't recorded
-  again (since v1.6, see [`screen_info.title`](#screen_infotitle))
+  again (see [`screen_info.title`](#screen_infotitle))
 - `"client"`: lines added on the client: other mods' messages, client command output,
   `minescript.echo`
 
 In `formatted`, hex colors that aren't one of the 16 `§` colors are dropped. Non-ASCII text (`§`,
-accents, arrows, emoji) arrives unchanged (fixed in v1.3.1: `§` used to arrive as `Â§` on Windows).
-
-Since: v1.2
+accents, arrows, emoji) arrives unchanged.
 
 #### chat.action_bar
 *Usage:* <code>chat.action_bar() -> str</code>
@@ -362,12 +334,6 @@ Gets the plain text of the latest action bar message.
 Every action bar message is captured, including `/title @s actionbar …` and messages from other
 mods. Servers often re-send the same action bar text every second or so. `action_bar()` always
 returns the latest, but an `"actionbar"` [`Line`](#chatline) is only recorded when the text changes.
-
-Update in v1.3.1:
-  Also captures `/title … actionbar` and other mods' action bar messages; repeated identical text is
-  recorded once.
-
-Since: v1.2
 
 #### chat.hide
 *Usage:* <code>chat.hide(pattern: str, ttl: float = None)</code>
@@ -384,15 +350,11 @@ by `lines`/`wait_for`/`listen`. The action bar is never hidden.
 
 Hidden lines don't reach `logs/latest.log` either.
 
-Since: v1.2
-
 #### chat.latest_seq
 *Usage:* <code>chat.latest_seq() -> int</code>
 
 Gets the seq of the newest recorded line. Call it **before** sending a command, then pass the
 result as `since=` so a fast reply isn't missed.
-
-Since: v1.2
 
 #### chat.lines
 *Usage:* <code>chat.lines(since: int = None, max: int = 500) -> List[Line]</code>
@@ -417,8 +379,6 @@ while True:
   time.sleep(0.1)
 ```
 
-Since: v1.2
-
 #### chat.listen
 *Usage:* <code>chat.listen(callback: Callable[[Line], None], pattern: str = None, source = None, since: int = None) -> Listener</code>
 
@@ -438,8 +398,6 @@ Calls `callback(line)` on a background thread for each new matching line until s
 The callback runs on another thread. Minescript calls made from that thread haven't been fully
 checked in game, so if one misbehaves, poll [`chat.lines`](#chatlines) on the main loop instead.
 
-Since: v1.2
-
 #### chat.Listener
 
 ```
@@ -449,14 +407,10 @@ Since: v1.2
 `Listener.stop()` stops listening and waits up to 1 s for the thread to end. It's safe to call from
 inside the callback.
 
-Since: v1.2
-
 #### chat.unhide
 *Usage:* <code>chat.unhide(pattern: str)</code>
 
 Removes a hide rule. `pattern` must be the same string passed to [`chat.hide`](#chathide).
-
-Since: v1.2
 
 #### chat.wait_for
 *Usage:* <code>chat.wait_for(pattern: str, timeout: float = 10, source = None, since: int = None) -> Line</code>
@@ -479,8 +433,6 @@ seq = chat.latest_seq()
 minescript.execute("/list")
 reply = chat.wait_for(r"players online", timeout=5, since=seq)
 ```
-
-Since: v1.2
 
 ### keys module
 
@@ -513,8 +465,6 @@ Gets the display name of the key bound to `slot`.
 
 - e.g. `"R"` or `"Left Shift"`, or `""` if unbound
 
-Since: v1.3
-
 #### keys.claim
 *Usage:* <code>keys.claim(slot: int, ttl: float = 2.0)</code>
 
@@ -525,15 +475,11 @@ Claims or renews `slot`, so its presses go to this script for `ttl` seconds.
 - `slot`: 1..[`count()`](#keyscount)
 - `ttl`: seconds, must be > 0; remembered and reused by `pressed`/`wait` on this slot
 
-Since: v1.3
-
 #### keys.count
 *Usage:* <code>keys.count() -> int</code>
 
 Gets the number of key slots registered at startup (`count` from the
 [configuration](#configuration)).
-
-Since: v1.3
 
 #### keys.pressed
 *Usage:* <code>keys.pressed(slot: int) -> int</code>
@@ -548,14 +494,10 @@ while running:
   time.sleep(0.05)
 ```
 
-Since: v1.3
-
 #### keys.release
 *Usage:* <code>keys.release(slot: int)</code>
 
 Releases `slot`: presses run its command again. Queued presses are dropped.
-
-Since: v1.3
 
 #### keys.wait
 *Usage:* <code>keys.wait(slot: int, timeout: float = None) -> bool</code>
@@ -578,8 +520,6 @@ try:
 finally:
   keys.release(1)
 ```
-
-Since: v1.3
 
 ### alert module
 
@@ -614,12 +554,6 @@ Never raises back into the script: a part that can't run is skipped and logged i
 if inventory_full():
   alert.alert("Inventory full", repeat=3)
 ```
-
-Since: v1.4
-
-Update in v1.4.1:
-
-- `chat=True` lines are recorded with source `"client"` (they were recorded as `"game"`)
 
 ### inputs module
 
@@ -658,8 +592,6 @@ while mining():
 inputs.hold("attack", False)
 ```
 
-Since: v1.4
-
 #### inputs.holding
 *Usage:* <code>with inputs.holding(key: str, owner: str = "", ttl: float = 1.0):</code>
 
@@ -671,8 +603,6 @@ with inputs.holding("forward", owner="walker"):
   time.sleep(5)
 ```
 
-Since: v1.4
-
 #### inputs.held
 *Usage:* <code>inputs.held() -> list</code>
 
@@ -682,15 +612,11 @@ Gets the keys held through this module, for debugging.
 
 - `[(key, owner, seconds_left), ...]`
 
-Since: v1.4
-
 #### inputs.release_all
 *Usage:* <code>inputs.release_all(owner: str = None)</code>
 
 Releases every key held through this module, or only those whose owner **starts with** `owner`.
 Give each script its own owner (`"farm."`) so scripts don't release each other's keys.
-
-Since: v1.4
 
 ### ticks module
 
@@ -713,8 +639,6 @@ and blocks for at most 0.1 s at a time, so a `\killjob`'d script lets go of the 
 
 Gets the number of client ticks that have ended since the game started.
 
-Since: v1.5
-
 #### ticks.wait
 *Usage:* <code>ticks.wait(n: int = 1, timeout: float = None) -> int</code>
 
@@ -735,8 +659,6 @@ while running:
   update_hud()
 ```
 
-Since: v1.5
-
 #### ticks.time_since
 *Usage:* <code>ticks.time_since(count: int) -> float</code>
 
@@ -748,8 +670,6 @@ start = ticks.count()
 do_something()
 minescript.echo(f"{ticks.count() - start} ticks, {ticks.time_since(start):.2f} s")
 ```
-
-Since: v1.5
 
 ### screen_info module
 
@@ -787,8 +707,6 @@ board = screen_info.sidebar()
 coins = next((l for l in board["lines"] if l.startswith("Coins: ")), None)
 ```
 
-Since: v1.6
-
 #### screen_info.tab_list
 *Usage:* <code>screen_info.tab_list() -> dict</code>
 
@@ -802,8 +720,6 @@ Gets the tab list (player list), whether or not it's open.
   e.g. `"survival"`
 - players in the game's own tab-list order, at most 80 (like the game)
 
-Since: v1.6
-
 #### screen_info.title
 *Usage:* <code>screen_info.title()</code>
 
@@ -813,8 +729,6 @@ Gets the title currently on screen.
 
 - `{"title": str, "formatted_title": str, "subtitle": str, "formatted_subtitle": str, "seconds_left": float}`,
   or `None` when no title is shown; `seconds_left` includes the fade-out
-
-Since: v1.6
 
 ### status module
 
@@ -847,14 +761,10 @@ while farming():
   time.sleep(1)
 ```
 
-Since: v1.7
-
 #### status.clear
 *Usage:* <code>status.clear(name: str)</code>
 
 Removes the line `name` now.
-
-Since: v1.7
 
 ### screens module
 
@@ -885,8 +795,6 @@ if screens.wait_for(r"Shop", timeout=5):
 
 Gets the open screen's title, or `""` if no screen is open.
 
-Since: v1.8
-
 #### screens.wait_for
 *Usage:* <code>screens.wait_for(title_regex: str, timeout: float = 10) -> bool</code>
 
@@ -897,8 +805,6 @@ screen opened (for empty containers). Polls about every 50 ms (`screens.POLL_SEC
 *Returns:*
 
 - `True`, or `False` after `timeout` seconds
-
-Since: v1.8
 
 #### screens.items
 *Usage:* <code>screens.items() -> list</code>
@@ -911,11 +817,9 @@ inventory (flagged `"player": True`).
 - `[{"slot": int, "id": str, "count": int, "name": str, "lore": [str, ...], "custom_data": dict or None, "damage": int, "max_damage": int, "player": bool}, ...]`
 - `slot` is the number to pass to [`click`](#screensclick); `id` e.g. `"minecraft:diamond_sword"`;
   `custom_data` is the item's `minecraft:custom_data` as JSON (NBT number types are lost), or `None`;
-  `damage`/`max_damage` are 0 for items without durability (since v1.11). The same dicts as
+  `damage`/`max_damage` are 0 for items without durability. The same dicts as
   [`inventory.items`](#inventoryitems).
 - `[]` when no container screen is open
-
-Since: v1.8
 
 #### screens.find
 *Usage:* <code>screens.find(name_regex: str = None, id: str = None, lore_regex: str = None)</code>
@@ -927,8 +831,6 @@ searched in the name, `id` equal to the item id (`"diamond"` means `"minecraft:d
 *Returns:*
 
 - the slot's dict, or `None`
-
-Since: v1.8
 
 #### screens.click
 *Usage:* <code>screens.click(slot: int, button: str = "left") -> bool</code>
@@ -944,8 +846,6 @@ Clicks `slot` in the open container.
 
 - `False` if no container is open or the slot doesn't exist
 
-Since: v1.8
-
 #### screens.click_item
 *Usage:* <code>screens.click_item(name_regex: str = None, id: str = None, lore_regex: str = None, button: str = "left") -> bool</code>
 
@@ -955,14 +855,10 @@ Since: v1.8
 
 - `True` if a matching slot was clicked
 
-Since: v1.8
-
 #### screens.close
 *Usage:* <code>screens.close()</code>
 
 Closes the open screen like Escape. A container is closed on the server too.
-
-Since: v1.8
 
 ### settings module
 
@@ -997,8 +893,6 @@ Keys missing from the file get their default (and are added to the file); keys o
 A broken file (not JSON, or not a JSON object) doesn't raise: it prints a warning, gives the defaults and is
 left as is so you can fix it. A value in the file of the wrong type also gives its default with a warning.
 
-Since: v1.9
-
 #### Settings
 Dict-like settings of one script, returned by [`load`](#settingsload).
 
@@ -1016,8 +910,6 @@ raises `TypeError` (an `int` is fine where the default is a `float`, and is stor
 default holds one element type, the elements must have that type too. Saves are atomic (a temp file, then a
 rename), so the editor or another script never reads half a file.
 
-Since: v1.9
-
 #### /msettings command
 *Usage:* `/msettings <script>` (tab-completes scripts that have a settings file)
 
@@ -1026,8 +918,6 @@ Opens an editor for `<script>.json`: an ON/OFF toggle for `bool`, a text field f
 disables **Save**. Saving writes the file atomically; a running script sees the change through
 [`changed()`/`reload()`](#settings). Keys that aren't a setting type (kept from the file) are shown but can't
 be edited. List items can't contain commas in the editor.
-
-Since: v1.9
 
 ### world_events module
 
@@ -1063,28 +953,20 @@ if world_events.wait_sound(r"entity\.fishing_bobber\.splash", timeout=30, since=
 Seq of the newest recorded sound. Grab it before doing something, then pass it as `since=` so a fast sound
 isn't missed.
 
-Since: v1.10
-
 #### world_events.latest_particle_seq
 *Usage:* <code>world_events.latest_particle_seq() -> int</code>
 
 Seq of the newest recorded particle packet.
-
-Since: v1.10
 
 #### world_events.sounds
 *Usage:* <code>world_events.sounds(since: int = None) -> list</code>
 
 Recorded [`Sound`](#world_eventssound)s after seq `since` (`None`: all of the last 500), oldest first.
 
-Since: v1.10
-
 #### world_events.particles
 *Usage:* <code>world_events.particles(since: int = None) -> list</code>
 
 Recorded [`Particle`](#world_eventsparticle)s after seq `since` (`None`: all of the last 500), oldest first.
-
-Since: v1.10
 
 #### world_events.wait_sound
 *Usage:* <code>world_events.wait_sound(id_regex: str, timeout: float = None, near=None, radius: float = None, since: int = None)</code>
@@ -1096,8 +978,6 @@ Waits for the first sound after `since` (default: now) whose id matches `id_rege
 
 - the [`Sound`](#world_eventssound), or `None` after `timeout` seconds (`None`: wait forever)
 
-Since: v1.10
-
 #### world_events.wait_particle
 *Usage:* <code>world_events.wait_particle(id_regex: str, timeout: float = None, near=None, radius: float = None, since: int = None)</code>
 
@@ -1106,8 +986,6 @@ Like [`wait_sound`](#world_eventswait_sound), for particle packets.
 *Returns:*
 
 - the [`Particle`](#world_eventsparticle), or `None` after `timeout` seconds
-
-Since: v1.10
 
 #### world_events.listen_sounds
 *Usage:* <code>world_events.listen_sounds(callback, id_regex: str = None)</code>
@@ -1119,14 +997,10 @@ Exceptions in the callback are printed and don't stop it.
 
 - a listener; call `.stop()` to end it
 
-Since: v1.10
-
 #### world_events.listen_particles
 *Usage:* <code>world_events.listen_particles(callback, id_regex: str = None)</code>
 
 Like [`listen_sounds`](#world_eventslisten_sounds), for particle packets.
-
-Since: v1.10
 
 #### world_events.Sound
 A recorded sound:
@@ -1141,13 +1015,9 @@ A recorded sound:
 | `volume`, `pitch` | as asked for, before the game's volume settings (muted sounds are recorded too) |
 | `relative` | `True` for sounds positioned relative to you (UI sounds, music): `x`/`y`/`z` are offsets |
 
-Since: v1.10
-
 #### world_events.Particle
 A recorded particle packet: `seq`, `time`, `id` (e.g. `"minecraft:flame"`), `x`, `y`, `z` and `count` (particles
 in the packet; 0 means one).
-
-Since: v1.10
 
 ### inventory module
 
@@ -1193,28 +1063,20 @@ Every non-empty item, by slot.
 - `damage` and `max_damage` are 0 for items without durability; the item breaks when `damage` reaches `max_damage`
 - `[]` without a player
 
-Since: v1.11
-
 #### inventory.hotbar
 *Usage:* <code>inventory.hotbar() -> list</code>
 
 9 entries, index = hotbar slot 0–8: the item dict or `None`.
-
-Since: v1.11
 
 #### inventory.selected
 *Usage:* <code>inventory.selected() -> int</code>
 
 The selected hotbar slot, 0–8, or `None` without a player.
 
-Since: v1.11
-
 #### inventory.held
 *Usage:* <code>inventory.held(hand: str = "main")</code>
 
 The item in the `"main"` or `"off"` hand, or `None`. Any other `hand` raises `ValueError`.
-
-Since: v1.11
 
 #### inventory.equipment
 *Usage:* <code>inventory.equipment() -> dict</code>
@@ -1225,8 +1087,6 @@ What the game counts as worn and held, read through the player's equipment slots
 
 - `{"head", "chest", "legs", "feet", "mainhand", "offhand"}`, each an item dict (its `slot` is where it sits in the
   inventory) or `None`
-
-Since: v1.11
 
 #### inventory.find
 *Usage:* <code>inventory.find(name_regex: str = None, id: str = None, lore_regex: str = None, where: str = "all")</code>
@@ -1243,14 +1103,10 @@ The first item (by slot) matching every given filter, like [`screens.find`](#scr
 
 - the item dict, or `None`
 
-Since: v1.11
-
 #### inventory.count
 *Usage:* <code>inventory.count(id: str = None, name_regex: str = None) -> int</code>
 
 Total count of matching items across the whole inventory (no filter: every item).
-
-Since: v1.11
 
 #### inventory.wait_for
 *Usage:* <code>inventory.wait_for(name_regex: str = None, id: str = None, lore_regex: str = None, timeout: float = None, where: str = "all")</code>
@@ -1260,8 +1116,6 @@ Waits until a matching item (see [`find`](#inventoryfind)) is in the inventory. 
 *Returns:*
 
 - the item dict, or `None` after `timeout` seconds (`None`: wait forever; negative raises `ValueError`)
-
-Since: v1.11
 
 ## Examples
 
