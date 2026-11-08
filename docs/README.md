@@ -1,4 +1,4 @@
-## Minescript Addon v1.0.0 docs
+## Minescript Addon v1.0.1 docs
 
 Table of contents:
 

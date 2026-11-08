@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,10 +29,11 @@ jobs:
         with:
           files: build/libs/minescriptaddon-*.jar
           generate_release_notes: true
-      - uses: Kir-Antipov/mc-publish@v3.3
+      - if: env.MODRINTH_TOKEN != ''  # skipped until the secret is set
+        uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: minescript-addon
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-token: ${{ env.MODRINTH_TOKEN }}
           files: build/libs/minescriptaddon-*.jar
           name: Minescript Addon ${{ github.ref_name }}
           version: ${{ github.ref_name }}
