@@ -45,4 +45,4 @@ jobs:
           java: 25
           dependencies: |
             fabric-api(required)
-            minescript(recommended)
+            minescript(required)
